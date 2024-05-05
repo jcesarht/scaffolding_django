@@ -1,0 +1,1 @@
+# This is a project like laboratory to create scaffolding API
