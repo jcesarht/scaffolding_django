@@ -13,7 +13,7 @@ def init():
 def creatingModel(target_param,appname_param):
     try:
         if(target_param ==''):
-            raise ValueError("target no puede estar vacio")
+            raise ValueError("targetdb no puede estar vacio")
         if(appname_param ==''):
             raise ValueError("coloca el nombre de la app en el parámetro appname")
         
