@@ -1,0 +1,48 @@
+#!/usr/bin/env python3
+from django.core.management.base import BaseCommand, CommandParser
+from sys import path
+path.append('.\\scaffolding')
+from scaffolding.create_model import InspectDB
+class Command(BaseCommand):
+    help = "Crea un API a partir de una base de datos"
+    help = "Create an API from a database|"
+
+    #prepare the argument of command scf
+    def add_arguments(self, parser):
+        target_text_help = '''Indica sobre que tabla debe actual, tambien puedes colocar (all) o (.) para aplicarlo a todas las tablas\n
+                        puedes escribir varias tablas separadas por coma "," sin espacios.'''
+        target_text_help = '''Specify which table to update. You can also use (all) or (.) to apply it to all tables.\n
+                            You can write more that one table separated with comma "," without spaces'''
+        appname_text_help = 'Coloca el nombre de la app o modulo principal del proyecto'
+        appname_text_help = 'Enter the name of the main app or module of the project'
+        parser.add_argument('targetdb', nargs=1, type=str,help=target_text_help)
+        parser.add_argument('appname', nargs=1, type=str,help=appname_text_help)
+    
+    #excecute the command's action 
+    def handle(self, *args, **options):
+        try:
+            target = options['targetdb'][0].strip()
+            appname = options['appname'][0].strip()
+            output_message = ''
+            if(target == ''):
+                output_message = 'targetdb no puede estar vacio'
+                output_message = 'targetdb can not be empty'
+                raise ValueError(output_message)
+            if(appname == ''):
+                output_message = 'appname no puede estar vacio'
+                output_message = 'appname can not be empty'
+                raise ValueError(output_message)
+            # create models with params got
+            idb = InspectDB()
+            idb.main_appname = appname
+            idb.database_target = target
+            idb.initilize()
+            is_create_model = idb.creatingModels()
+            if(not is_create_model['status']):
+                raise ValueError(is_create_model['message'])
+                
+            output_message = 'Proceso finalizado con éxito'
+            output_message = 'proccess finished succesfully'
+            self.stdout.write(self.style.SUCCESS(output_message))
+        except ValueError as e:
+            self.stdout.write(self.style.ERROR(e))
