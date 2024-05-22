@@ -4,7 +4,7 @@ import subprocess
 
 from sys import path
 path.append(".\\scaffolding")
-from scaffolding import create_model
+from scaffolding import handle_scaffold
 
 
 if __name__ == "__main__":
@@ -17,6 +17,6 @@ if __name__ == "__main__":
         args = parser.parse_args()
         target = args.target.strip()
         appname = args.appname.strip()
-        create_model.creatingModel(target,appname)
+        handle_scaffold.creatingModel(target,appname)
     except argparse.ArgumentError:
         print("An Error has been accurred")

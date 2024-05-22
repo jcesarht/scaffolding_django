@@ -9,6 +9,7 @@ class InspectDB:
     # initialize module
     def __init__(self):
         self.__targetdb = ''
+        self.__alldbtables = ''
         self.__appname = ''
         self.__initialize = False
         self.__cursor = None
@@ -80,7 +81,7 @@ class InspectDB:
         output_message = ''
         try:
             if self.__initialize == False:
-                output_message = "Module not initialized successfully"
+                output_message = "Module not initialized for getTablesFromCursor"
                 raise ValueError(output_message)
             result_tables = cursor_param.fetchall()
             table_list = []
@@ -105,10 +106,9 @@ class InspectDB:
         try:
             output_message = ''
             if self.__initialize == False:
-                output_message = "Module not initialized successfully"
+                output_message = "Module not initialized for create Model"
                 raise ValueError(output_message)
-            dbtables = self.getTablesFromCursor(self.__cursor)
-            dbtables = dbtables['data']
+            dbtables = self.__alldbtables
             if ( targetdb != '.' and targetdb != 'all' ):
                 target_list = targetdb.split(',')
                 #Verify if all param's tables exists
@@ -116,6 +116,11 @@ class InspectDB:
                     if(table not in dbtables):
                         output_message  = f"Table {table} not exist in database"
                         raise ValueError(output_message)
+                    with open('models.py','w') as file:
+                        p = subprocess.run(["py","manage.py","inspectdb",table],stdout=file)
+            else:
+                with open('models.py','w') as file:
+                    p = subprocess.run(["py","manage.py","inspectdb"],stdout=file)    
                 #Create every app by every table
                  
 
@@ -129,6 +134,60 @@ class InspectDB:
             response['message'] = e
         return response
 
+    def createApp(self,entity_param):
+        response = {
+            'status': False,
+            'message': ''
+        }
+        try:
+            entity = entity_param
+            if self.__initialize == False:
+                output_message = "Module not initialized for createApp"
+                raise ValueError(output_message)
+            if entity == "":
+                output_message = "Entity have not empty"
+                raise ValueError(output_message)
+            p = subprocess.run(["py","manage.py","startapp",entity],stdout=subprocess.PIPE)
+        except ValueError as e:
+             response['message'] = e
+        return response
+    
+    def MainHandle(self):
+        response = {
+            'status': False,
+            'message': ''
+        }
+        
+        targetdb = self.__targetdb
+        
+        try:
+            output_message = ''
+            if self.__initialize == False:
+                output_message = "Module not initialized successfully"
+                raise ValueError(output_message)
+            
+            dbtables = self.getTablesFromCursor(self.__cursor)
+            self.__alldbtables = dbtables['data']
+            targetdb = self.__targetdb
+            if ( targetdb != '.' and targetdb != 'all' ):
+                target_list = targetdb.split(',')
+                #Verify if all param's tables exists
+                for table in target_list:
+                    if(table not in self.__alldbtables):
+                        output_message  = f"Table {table} not exist in database"
+                        raise ValueError(output_message)
+                targetdb = target_list
+            else:
+                targetdb = self.__alldbtables
+            
+            for entity in targetdb:
+                self.createApp(entity)
+            output_message = "API created successfully"
+            response['status'] = True    
+            response['message'] = output_message    
+        except ValueError as e:
+            response['message'] = e
+        return response
 if __name__ == "__main__":
     print("Sorry this is not main package")
     exit()

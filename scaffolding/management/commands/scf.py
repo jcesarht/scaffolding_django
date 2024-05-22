@@ -2,7 +2,7 @@
 from django.core.management.base import BaseCommand, CommandParser
 from sys import path
 path.append('.\\scaffolding')
-from scaffolding.create_model import InspectDB
+from scaffolding.handle_scaffold import InspectDB
 class Command(BaseCommand):
     help = "Crea un API a partir de una base de datos"
     help = "Create an API from a database|"
@@ -37,7 +37,7 @@ class Command(BaseCommand):
             idb.main_appname = appname
             idb.database_target = target
             idb.initilize()
-            is_create_model = idb.creatingModels()
+            is_create_model = idb.MainHandle()
             if(not is_create_model['status']):
                 raise ValueError(is_create_model['message'])
                 
