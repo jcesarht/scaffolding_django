@@ -20,7 +20,9 @@ class Command(BaseCommand):
     
     #excecute the command's action 
     def handle(self, *args, **options):
+        idb = InspectDB()
         try:
+            self.stdout.write(self.style.HTTP_INFO('scaffold is initializing...'))
             target = options['targetdb'][0].strip()
             appname = options['appname'][0].strip()
             output_message = ''
@@ -33,16 +35,16 @@ class Command(BaseCommand):
                 output_message = 'appname can not be empty'
                 raise ValueError(output_message)
             # create models with params got
-            idb = InspectDB()
             idb.main_appname = appname
             idb.database_target = target
             idb.initilize()
-            is_create_model = idb.MainHandle()
-            if(not is_create_model['status']):
-                raise ValueError(is_create_model['message'])
+            is_successfully_process = idb.main_handle()
+            if(not is_successfully_process['status']):
+                raise ValueError(is_successfully_process['message'])
                 
             output_message = 'Proceso finalizado con éxito'
             output_message = 'proccess finished succesfully'
             self.stdout.write(self.style.SUCCESS(output_message))
         except ValueError as e:
+            idb.reverseProcess()
             self.stdout.write(self.style.ERROR(e))

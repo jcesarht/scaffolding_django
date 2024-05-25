@@ -13,6 +13,7 @@ class InspectDB:
         self.__appname = ''
         self.__initialize = False
         self.__cursor = None
+        self.__sufix_app = '_app'
 
     # Setting the database table, tables or  the whole database
     def database_target(self,target_param):
@@ -95,46 +96,34 @@ class InspectDB:
         return response
     
     # Create the models 
-    def creatingModels(self):
+    def create_model(self,entity_param):
         response = {
             'status': False,
             'message': ''
         }
         
-        targetdb = self.__targetdb
-        
         try:
             output_message = ''
             if self.__initialize == False:
-                output_message = "Module not initialized for create Model"
+                output_message = "Module not initialized for create_model"
                 raise ValueError(output_message)
-            dbtables = self.__alldbtables
-            if ( targetdb != '.' and targetdb != 'all' ):
-                target_list = targetdb.split(',')
-                #Verify if all param's tables exists
-                for table in target_list:
-                    if(table not in dbtables):
-                        output_message  = f"Table {table} not exist in database"
-                        raise ValueError(output_message)
-                    with open('models.py','w') as file:
-                        p = subprocess.run(["py","manage.py","inspectdb",table],stdout=file)
-            else:
-                with open('models.py','w') as file:
-                    p = subprocess.run(["py","manage.py","inspectdb"],stdout=file)    
-                #Create every app by every table
+            
+            entity = entity_param
+            if entity == "":
+                output_message = "Entity have not empty to create_model"
+                raise ValueError(output_message)
+            
+            with open(f'./{entity + self.__sufix_app}/models.py','w') as file:
+                p = subprocess.run(["py","manage.py","inspectdb",entity],stdout=file)
                  
-
             response['status'] = True  
-            response['message'] = 'Models create successfully'  
-            #p = subprocess.run(["py","manage.py","inspectdb"],stdout=subprocess.PIPE)
-            #print(p)
-            #with open('models.py','w') as file:
-            #    p = subprocess.run(["py","manage.py","inspectdb"],stdout=file)
+            response['message'] = f'{entity} model created successfully'
         except ValueError as e:
             response['message'] = e
         return response
-
-    def createApp(self,entity_param):
+    
+    # Create the entity's app
+    def create_app(self,entity_param):
         response = {
             'status': False,
             'message': ''
@@ -142,17 +131,19 @@ class InspectDB:
         try:
             entity = entity_param
             if self.__initialize == False:
-                output_message = "Module not initialized for createApp"
+                output_message = "Module not initialized for create_app"
                 raise ValueError(output_message)
             if entity == "":
                 output_message = "Entity have not empty"
                 raise ValueError(output_message)
-            p = subprocess.run(["py","manage.py","startapp",entity],stdout=subprocess.PIPE)
+            p = subprocess.run(["py","manage.py","startapp",entity + self.__sufix_app],stdout=subprocess.PIPE)
+            response['status'] = True  
+            response['message'] = f'{entity} app created successfully'
         except ValueError as e:
              response['message'] = e
         return response
     
-    def MainHandle(self):
+    def main_handle(self):
         response = {
             'status': False,
             'message': ''
@@ -181,13 +172,76 @@ class InspectDB:
                 targetdb = self.__alldbtables
             
             for entity in targetdb:
-                self.createApp(entity)
+                is_create_app = self.create_app(entity)
+                if(not is_create_app['status']):
+                    output_message  = f"{entity} app has not been created. Please reset the process"
+                    raise ValueError(output_message)
+                output_message = is_create_app['message']
+                print(output_message)
+                is_create_model = self.create_model(entity)
+                if(not is_create_model['status']):
+                    output_message  = f"{entity} model has not been created. Please reset the process"
+                    raise ValueError(output_message)
+                output_message = is_create_model['message']
+                print(output_message)
+            self.setting_process()
             output_message = "API created successfully"
             response['status'] = True    
             response['message'] = output_message    
         except ValueError as e:
             response['message'] = e
         return response
+    
+    def setting_process(self):
+        response = {
+            'status' : False,
+            'message' : ''
+        }
+        try:
+            if self.__initialize == False:
+                output_message = "Module not initialized successfully"
+                raise ValueError(output_message)
+            p = subprocess.run(["py","manage.py","makemigrations"],stdout=subprocess.PIPE)
+            print(p)
+            p = subprocess.run(["py","manage.py","migrate"],stdout=subprocess.PIPE)
+            print(p)
+            response['status'] = True
+            response['message'] = 'Setting were executed successfully'
+        except ValueError as e:
+            response['message'] = e
+        return response
+        
+    # Reverse all process executed
+    def reverse_process(self):
+        response = {
+            'status': False,
+            'message': ''
+        }
+        try:
+            targetdb = self.__targetdb
+            if ( targetdb != '.' and targetdb != 'all' ):
+                target_list = targetdb.split(',')
+                #Verify if all param's tables exists
+                for table in target_list:
+                    if(table not in self.__alldbtables):
+                        output_message  = f"Table {table} not exist in database"
+                        raise ValueError(output_message)
+                targetdb = target_list
+            else:
+                targetdb = self.__alldbtables
+            # Import the function to delete folders 
+            from os import rmdir
+            for entity in targetdb:
+                rmdir(entity + self.__sufix_app)
+                
+                output_message = f'{entity + self.__sufix_app} deleted successfully'
+                print(output_message)
+            output_message = "Process reverse successfully"
+            response['status'] = True    
+            response['message'] = output_message    
+        except ValueError as e:
+            response['message'] = e
+        
 if __name__ == "__main__":
     print("Sorry this is not main package")
     exit()
