@@ -34,7 +34,7 @@ class Command(BaseCommand):
                 output_message = 'projectname no puede estar vacio'
                 output_message = 'projectname can not be empty'
                 raise ValueError(output_message)
-            # create models with params got
+            # create models with params obtained
             idb.main_project_name = projectname
             idb.database_target = target
             idb.initilize()

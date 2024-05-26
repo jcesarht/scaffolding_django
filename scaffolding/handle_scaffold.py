@@ -167,9 +167,7 @@ class InspectDB:
             
             appname = entity + self.__sufix_app
             p = subprocess.run(["py","manage.py","makemigrations",appname],stdout=subprocess.PIPE)
-            print(p)
             p = subprocess.run(["py","manage.py","migrate",appname],stdout=subprocess.PIPE)
-            print(p)
             response['status'] = True
             response['message'] = 'Setting were executed successfully'
         except ValueError as e:
@@ -246,8 +244,8 @@ class InspectDB:
             module = __import__(module_name, fromlist=[class_name])
             class_model = getattr(module, class_name)
             fields = class_model._meta.get_fields()
+            
             response['data'] = fields
-
             response['status']  = True
             response['message'] = 'get all fields process were executed successfully'
         except ValueError as e:
@@ -264,15 +262,36 @@ class InspectDB:
         output_message = ''
         try:
             entity = entity_param
+            appname = entity + self.__sufix_app
             if not entity:
                 output_message = "Entity can not be empty for intall app process"
                 raise ValueError(output_message)
             
-            if entity not in __dgsettings__.INSTALLED_APPS:
-                __dgsettings__.INSTALLED_APPS += entity + self.__sufix_app 
-                
-            from django.apps import apps as __apps
-            __apps.populate(__dgsettings__.INSTALLED_APPS)
+            # path to settings.py file
+            settings_file = f'./{self.__project_name}/settings.py'
+
+            # we read the file
+            with open(settings_file, 'r') as f:
+                lines = f.readlines()
+            
+            # search INSTALLED_APPS line and add it
+            line_number = 0
+            for index, line in enumerate(lines):
+                if line.startswith('INSTALLED_APPS'):
+                    line_number = index
+                # in case fin INSTALLED_APPS so start to search the app name or ] character    
+                if line_number > 0:
+                    #if find the app is installed then break and nothing for make
+                    if appname in lines[index]:
+                        break
+                    #if find de ] character then add the line with the app name 
+                    elif ']' in lines[index]:
+                        lines[index] = line.rstrip()[:-1] + f"   '{appname}',\n ]\n\n"
+                        break
+            # re write the setting.py
+            with open(settings_file, 'w') as f:
+                f.writelines(lines)
+    
             response['status']  = True
             output_message = f"{entity} was installed successfully"
             response['message'] = output_message
@@ -310,6 +329,7 @@ class InspectDB:
                 targetdb = self.__alldbtables
             
             for entity in targetdb:
+                
                 is_create_app = self.create_app(entity)
                 if(not is_create_app['status']):
                     output_message  = f"{entity} app has not been created. Please reset the process"
@@ -322,22 +342,19 @@ class InspectDB:
                     raise ValueError(output_message)
                 output_message = is_create_model['message']
                 print(output_message)
-                #installing app
                 is_installed_app = self.install_app(entity)
-                print(is_installed_app)
-                exit
+                #installing app
                 if(not is_installed_app['status']):
                     output_message  = f"{entity} install app process has not been finished. Please reset the process"
                     raise ValueError(output_message)
-                exit()
                 # apply migration
-                #is_migration_created = self.migration_process(entity)
+                is_migration_created = self.migration_process(entity)
                 if(not is_migration_created['status']):
                     output_message  = f"{entity} migration process has not been finished. Please reset the process"
                     raise ValueError(output_message)
                 output_message = is_migration_created['message']
                 print(output_message)
-                print(self.get_all_fields_entity(entity))
+                #print(self.get_all_fields_entity(entity))
             output_message = "API created successfully"
             response['status'] = True    
             response['message'] = output_message    
