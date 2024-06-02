@@ -38,12 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'scaffolding',
- ]
-
-
-
-
-
+    'empleados_app',
+]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

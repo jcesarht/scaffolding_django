@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
+#import tools to works
 from os import environ as __enviroment__, getcwd, path as __getpath__
 from django.db import connection as __con__
 from django import setup as __setup__
+import importlib
 #import settings conf 
 from django.conf import settings as __dgsettings__
 import subprocess
@@ -119,10 +121,51 @@ class InspectDB:
                 if p.returncode != 0:
                     output_message = f"something was wrong to create model with {entity} entity"
                     raise ValueError(output_message) 
+            with open(f'./{entity + self.__sufix_app}/models.py','r') as file:
+                lines = file.readlines()
+            #search all forenig keys in model.py 
+            foreing_keys = []
+            content_file = []
+            keyword = "ForeignKey('"
+            flat_label_app=0
+            for index, line in enumerate(lines):
+                if keyword in line:
+                    start = line.find(keyword) + 12
+                    end = line.find("'",start)
+                    foreing_key = line[start:end]
+                    line = line.replace("\'","",2)
+                    foreing_keys.append(
+                        {
+                            'line':index,
+                            'foreing_key': foreing_key
+                        }
+                    )
+                if "class Meta:" in line and flat_label_app == 0:
+                    line = line + f"\n        app_label = '{entity + self.__sufix_app}'\n"
+                    flat_label_app = 1
+                content_file.append(line)
+            #insert foreing keys into file model.py
+            flat = 0
+            for index, line in enumerate(content_file):
+                if 'from' in line and flat == 0:
+                    flat = 1
+                elif 'from' not in line and flat == 1:
+                    for fkey in foreing_keys:
+                        str_app = f"{fkey['foreing_key']}"+self.__sufix_app
+                        str_import = f'from {str_app.lower()}.models import {fkey["foreing_key"]}'
+                        content_file.insert(index,str_import)
+                    flat = 2
+            # rewrite model.py    
+            with open(f'./{entity + self.__sufix_app}/models.py','w') as file:
+                file.writelines(content_file)
             response['status'] = True  
             response['message'] = f'{entity} model created successfully'
         except ValueError as e:
             response['message'] = e
+        # except TypeError as tye:
+        #     response['message'] = tye
+        except AttributeError as atre:
+            response['message'] = atre
         return response
     
     # Create the entity's app
@@ -169,65 +212,45 @@ class InspectDB:
             p = subprocess.run(["py","manage.py","makemigrations",appname],stdout=subprocess.PIPE)
             p = subprocess.run(["py","manage.py","migrate",appname],stdout=subprocess.PIPE)
             response['status'] = True
-            response['message'] = 'Setting were executed successfully'
+            response['message'] = f'{entity} setting was implemented successfully'
         except ValueError as e:
             response['message'] = e
         return response
     
     # create Serialize file
-    def create_serialize(self):
+    def create_serialization(self,entity_param):
         response = {
             'status' : False,
             'message' : '',
             'data' : []
         }
         try:
+            entity = entity_param
+            if self.__initialize == False:
+                output_message = "Module not initialized for create_app"
+                raise ValueError(output_message)
+            if entity == "":
+                output_message = "Entity have not empty"
+                raise ValueError(output_message)
+            
             serialize_file = SerializeTemplate()
             serialize_file.set_app_name = self.__project_name
             
             response['status']  = True
-            response['message'] = 'serialize file process were executed successfully'
+            response['message'] = 'serialize file process was executed successfully'
         except ValueError as e:
             response['message'] = e
         return response
         
-    
-    # Reverse all process executed
-    def reverse_process(self):
-        response = {
-            'status': False,
-            'message': ''
-        }
-        try:
-            targetdb = self.__targetdb
-            if ( targetdb != '.' and targetdb != 'all' ):
-                target_list = targetdb.split(',')
-                #Verify if all param's tables exists
-                for table in target_list:
-                    if(table not in self.__alldbtables):
-                        output_message  = f"Table {table} not exist in database"
-                        raise ValueError(output_message)
-                targetdb = target_list
-            else:
-                targetdb = self.__alldbtables
-            # Import the function to delete folders 
-            from os import rmdir
-            for entity in targetdb:
-                rmdir(entity + self.__sufix_app)
-                
-                output_message = f'{entity + self.__sufix_app} deleted successfully'
-                print(output_message)
-            output_message = "Process reverse successfully"
-            response['status'] = True    
-            response['message'] = output_message    
-        except ValueError as e:
-            response['message'] = e
     #Ask to user
-    def ask_user(self,section_question_param):
+    def ask_user(self,section_question_param,entity_param = None):
         section_question = section_question_param
-        if(section_question == 'serialize'):
+        entity = entity_param
+        if(section_question == 'serialization'):
+            list_fields = self.get_all_fields_entity(entity)
             message_to_user = f'See all fields related to the entity {entity} below'
             print(message_to_user)
+            print(list_fields)
     
     #Get all fields         
     def get_all_fields_entity(self,entity_param):
@@ -241,10 +264,12 @@ class InspectDB:
             module_name = entity + self.__sufix_app + '.models'
             class_name = entity.capitalize()
 
-            module = __import__(module_name, fromlist=[class_name])
-            class_model = getattr(module, class_name)
-            fields = class_model._meta.get_fields()
-            
+            module_model_class = importlib.import_module(module_name)
+            # obtain all fields from model
+            class_fields = getattr(module_model_class,class_name)._meta.get_fields()
+            fields = []
+            for field in class_fields:
+                fields.append(field.name);
             response['data'] = fields
             response['status']  = True
             response['message'] = 'get all fields process were executed successfully'
@@ -286,7 +311,7 @@ class InspectDB:
                         break
                     #if find de ] character then add the line with the app name 
                     elif ']' in lines[index]:
-                        lines[index] = line.rstrip()[:-1] + f"   '{appname}',\n ]\n\n"
+                        lines[index] = line.rstrip()[:-1] + f"    '{appname}',\n]\n"
                         break
             # re write the setting.py
             with open(settings_file, 'w') as f:
@@ -307,7 +332,6 @@ class InspectDB:
         }
         
         targetdb = self.__targetdb
-        
         try:
             output_message = ''
             if self.__initialize == False:
@@ -342,8 +366,8 @@ class InspectDB:
                     raise ValueError(output_message)
                 output_message = is_create_model['message']
                 print(output_message)
-                is_installed_app = self.install_app(entity)
                 #installing app
+                is_installed_app = self.install_app(entity)
                 if(not is_installed_app['status']):
                     output_message  = f"{entity} install app process has not been finished. Please reset the process"
                     raise ValueError(output_message)
@@ -354,14 +378,49 @@ class InspectDB:
                     raise ValueError(output_message)
                 output_message = is_migration_created['message']
                 print(output_message)
-                #print(self.get_all_fields_entity(entity))
+                self.ask_user('serialization',entity)
+            
             output_message = "API created successfully"
             response['status'] = True    
             response['message'] = output_message    
         except ValueError as e:
             response['message'] = e
         return response
-        
+    
+    # Reverse all process executed
+    def reverse_process(self):
+        response = {
+            'status': False,
+            'message': ''
+        }
+        try:
+            targetdb = self.__targetdb
+            if ( targetdb != '.' and targetdb != 'all' ):
+                target_list = targetdb.split(',')
+                #Verify if all param's tables exists
+                for table in target_list:
+                    if(table not in self.__alldbtables):
+                        output_message  = f"Table {table} not exist in database"
+                        raise ValueError(output_message)
+                targetdb = target_list
+            else:
+                targetdb = self.__alldbtables
+            # Import the function to delete folders 
+            import shutil
+            for entity in targetdb:
+                shutil.rmtree("./"+entity + self.__sufix_app, ignore_errors=True)
+                output_message = f'{entity + self.__sufix_app} deleted successfully'
+                print(output_message)
+            content_setting = ''
+            with open(f'./{self.__project_name}/settings-copy.py','r') as file:
+                content_setting = file.readlines()
+            with open(f'./{self.__project_name}/settings.py','w') as file:
+                file.writelines(content_setting)
+            output_message = "Process reverse successfully"
+            response['status'] = True    
+            response['message'] = output_message    
+        except ValueError as e:
+            response['message'] = e    
 if __name__ == "__main__":
     print("Sorry this is not main package")
     exit()

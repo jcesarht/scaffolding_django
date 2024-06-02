@@ -39,12 +39,12 @@ class SerializeTemplate:
             serialize_file = open(file_name,'w')
             serialize_file.writelines(content)
             response['status']  = True
-            response['message'] = 'Proccess were executed successfully'
+            response['message'] = 'Proccess was executed successfully'
         except ValueError as e:
             response['message'] = e
         return response
         
-    #contain the schema about the file content
+    #contains the schema about the file content
     def __serialize_schema(self):
         response = {
             'status' : False,
