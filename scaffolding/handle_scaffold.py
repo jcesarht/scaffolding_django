@@ -232,10 +232,19 @@ class InspectDB:
             if entity == "":
                 output_message = "Entity have not empty"
                 raise ValueError(output_message)
-            
+            # User must answer somes questions
+            input_data = self.ask_user('serialization',entity)
+            if not input_data['status']:
+                raise ValueError("Something was wrong getting inputs; Try again please")
+            #create serialize file
             serialize_file = SerializeTemplate()
-            serialize_file.set_app_name = self.__project_name
-            
+            serialize_file.class_name = entity
+            serialize_file.app_name = entity + self.__sufix_app
+            serialize_file.entitys_fields = input_data['data'][0]
+            serialize_file.entitys_fields_only_read = input_data['data'][1]
+            response_ser = serialize_file.create_serialize_file()
+            if(not response_ser['status']):
+                raise ValueError("Serialization was not created")
             response['status']  = True
             response['message'] = 'serialize file process was executed successfully'
         except ValueError as e:
@@ -244,14 +253,47 @@ class InspectDB:
         
     #Ask to user
     def ask_user(self,section_question_param,entity_param = None):
-        section_question = section_question_param
-        entity = entity_param
-        if(section_question == 'serialization'):
-            list_fields = self.get_all_fields_entity(entity)
-            message_to_user = f'See all fields related to the entity {entity} below'
-            print(message_to_user)
-            print(list_fields)
-    
+        response = {
+            'status' : False,
+            'message' : '',
+            'data' : []
+        }
+        try:
+            section_question = section_question_param
+            entity = entity_param
+            if(section_question == 'serialization'):
+                list_fields = self.get_all_fields_entity(entity)['data']
+                message_to_user = f'See all fields related to the entity {entity} below'
+                print(message_to_user)
+                for index, field in enumerate(list_fields):
+                    print(str(index + 1) + ". " + field)            
+                print("Please select which will be enable fields for API")
+                fields_choose_input = input("Write the number or numbers separated with comma. ej: 1,3,..n: or let empty for all: ").split(",")
+                print("Please select which will be fields only read")
+                only_read_fields_choose_input = input("Write the number or numbers separated with comma. ej: 1,3,..n; or let empty for anything: ").split(",")
+                fields_choose = []
+                fields_choose_only_read = []
+                
+                if (fields_choose_input[0] == ''):
+                    fields_choose = list_fields
+                else:
+                    for field_choose in fields_choose_input:
+                        fields_choose.append(list_fields[(int(field_choose) - 1)])
+                if(only_read_fields_choose_input[0] == ""):
+                    only_read_fields_choose_input = []
+                else:
+                    for field_choose_only_read in only_read_fields_choose_input:
+                        fields_choose_only_read.append(list_fields[(int(field_choose_only_read) - 1)])
+                    
+                response['data']  = [fields_choose,fields_choose_only_read]
+            response['status']  = True
+            response['message'] = 'input obtained successfully'
+        except ValueError as e:
+            response['message'] = e
+        return response
+            
+            
+            
     #Get all fields         
     def get_all_fields_entity(self,entity_param):
         response = {
@@ -378,8 +420,10 @@ class InspectDB:
                     raise ValueError(output_message)
                 output_message = is_migration_created['message']
                 print(output_message)
-                self.ask_user('serialization',entity)
-            
+                is_serialize_implement = self.create_serialization(entity)
+                if (not is_serialize_implement['status']):
+                    output_message  = f"{entity} serialization process has not been finished. Please reset the process"
+                    raise ValueError(output_message)
             output_message = "API created successfully"
             response['status'] = True    
             response['message'] = output_message    
