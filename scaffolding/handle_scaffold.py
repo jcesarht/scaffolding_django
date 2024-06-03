@@ -8,6 +8,8 @@ import importlib
 from django.conf import settings as __dgsettings__
 import subprocess
 from .template.core.serialize.serialize_temp import SerializeTemplate
+from .template.core.viewset.viewset import viewSetTemplate
+from .template.core.url.route import RouteTemplate
 except_message = ''
 class InspectDB:
     # initialize module
@@ -227,7 +229,7 @@ class InspectDB:
         try:
             entity = entity_param
             if self.__initialize == False:
-                output_message = "Module not initialized for create_app"
+                output_message = "Module not initialized for serialize file"
                 raise ValueError(output_message)
             if entity == "":
                 output_message = "Entity have not empty"
@@ -250,7 +252,62 @@ class InspectDB:
         except ValueError as e:
             response['message'] = e
         return response
-        
+    
+    #Create viewSet file
+    def create_viewset_file(self,entity_param):
+        response = {
+            'status' : False,
+            'message' : '',
+            'data' : []
+        }
+        try:
+            entity = entity_param
+            if self.__initialize == False:
+                output_message = "Module not initialized for viewset"
+                raise ValueError(output_message)
+            if entity == "":
+                output_message = "Entity have not empty"
+                raise ValueError(output_message)
+            #create viewSet file
+            viewset_file = viewSetTemplate()
+            viewset_file.class_name = entity
+            viewset_file.app_name = entity + self.__sufix_app
+            response_ser = viewset_file.create_viewset_file()
+            if(not response_ser['status']):
+                raise ValueError("Viewset was not created")
+            response['status']  = True
+            response['message'] = 'Viewset file process was executed successfully'
+        except ValueError as e:
+            response['message'] = e
+        return response
+    
+    #Create viewSet file
+    def create_url_file(self,entity_param):
+        response = {
+            'status' : False,
+            'message' : '',
+            'data' : []
+        }
+        try:
+            entity = entity_param
+            if self.__initialize == False:
+                output_message = "Module not initialized for viewset"
+                raise ValueError(output_message)
+            if entity == "":
+                output_message = "Entity have not empty"
+                raise ValueError(output_message)
+            #create url file
+            route_file = RouteTemplate()
+            route_file.class_name = entity
+            route_file.app_name = entity + self.__sufix_app
+            response_router = route_file.create_url_file()
+            if(not response_router['status']):
+                raise ValueError("Viewset was not created")
+            response['status']  = True
+            response['message'] = 'Viewset file process was executed successfully'
+        except ValueError as e:
+            response['message'] = e
+        return response   
     #Ask to user
     def ask_user(self,section_question_param,entity_param = None):
         response = {
@@ -424,6 +481,15 @@ class InspectDB:
                 if (not is_serialize_implement['status']):
                     output_message  = f"{entity} serialization process has not been finished. Please reset the process"
                     raise ValueError(output_message)
+                is_viewset_implement = self.create_viewset_file(entity)
+                if (not is_viewset_implement['status']):
+                    output_message  = f"{entity} viewSet process has not been finished. Please reset the process"
+                    raise ValueError(output_message)
+                is_urls_register = self.create_url_file(entity)
+                if (not is_urls_register['status']):
+                    output_message  = f"{entity} Urls process has not been finished. Please reset the process"
+                    raise ValueError(output_message)
+                
             output_message = "API created successfully"
             response['status'] = True    
             response['message'] = output_message    

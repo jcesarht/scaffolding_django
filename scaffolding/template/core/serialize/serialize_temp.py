@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 class SerializeTemplate:
-    # initializie the class to use the variable necesary
+    # initializie the class to use the necesary variable
     def __init__(self):
         self.__app_name = ''
         self.__class_name = ''
@@ -110,11 +110,7 @@ class SerializeTemplate:
             ]
             response['data'] = content
             response['status']  = True
-            response['message'] = 'Schema was generated successfully'
+            response['message'] = 'Serializer schema was generated successfully'
         except ValueError as e:
             response['message'] = e
         return response
-    
-    
-        
-        
