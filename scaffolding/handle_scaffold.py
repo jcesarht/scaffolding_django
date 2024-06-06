@@ -423,6 +423,41 @@ class InspectDB:
             response['message'] = e
         return response
     
+    def config_main_url(self, entity_param):
+        response = {
+            'status' : False,
+            'message' : '',
+            'data' : []
+        }
+        try:
+            entity = entity_param
+            appname = entity + self.__sufix_app
+            if not entity:
+                output_message = "Entity can not be empty for intall app process"
+                raise ValueError(output_message)
+            
+             # path to settings.py file
+            urls_file = f'./{self.__project_name}/urls.py'
+
+            # we read the file
+            with open(urls_file, 'r') as f:
+                lines = f.readlines()
+            flag_import = 0
+            for index,line in enumerate(lines):
+                if line.startswith('from django.urls import path') and index > 1 and flag_import == 0:
+                    lines[index] = line[: -1] + ", include\n"
+                    flag_import +=1
+                    
+                if line.startswith("urlpatterns = ["):
+                   lines[index] = line[: -1] + f"\n    path('', include('{appname}.urls')),\n"
+            with open(urls_file,'w+') as file:
+                file.writelines(lines)
+            response['status']  = True
+            response['message'] = 'Proccess were executed successfully'
+        except ValueError as e:
+            response['message'] = e
+        return response
+    
     #Main function
     def main_handle(self):
         response = {
@@ -489,6 +524,10 @@ class InspectDB:
                 if (not is_urls_register['status']):
                     output_message  = f"{entity} Urls process has not been finished. Please reset the process"
                     raise ValueError(output_message)
+                is_main_urls_register = self.config_main_url(entity)
+                if (not is_main_urls_register['status']):
+                    output_message  = f"{entity} Main urls process has not been installed successfully. Please reset the process"
+                    raise ValueError(output_message)
                 
             output_message = "API created successfully"
             response['status'] = True    
@@ -517,15 +556,23 @@ class InspectDB:
                 targetdb = self.__alldbtables
             # Import the function to delete folders 
             import shutil
+            content_setting = ''
+            #restore urls.py in main project
+            with open(f'./{self.__project_name}/urls-copy.py','r') as file:
+                content_setting = file.readlines()
+            with open(f'./{self.__project_name}/urls.py','w') as file:
+                file.writelines(content_setting)
+            
+            #restore the settings in main project
+            with open(f'./{self.__project_name}/settings-copy.py','r') as file:
+                content_setting = file.readlines()
+            with open(f'./{self.__project_name}/settings.py','w') as file:
+                file.writelines(content_setting)
             for entity in targetdb:
                 shutil.rmtree("./"+entity + self.__sufix_app, ignore_errors=True)
                 output_message = f'{entity + self.__sufix_app} deleted successfully'
                 print(output_message)
             content_setting = ''
-            with open(f'./{self.__project_name}/settings-copy.py','r') as file:
-                content_setting = file.readlines()
-            with open(f'./{self.__project_name}/settings.py','w') as file:
-                file.writelines(content_setting)
             output_message = "Process reverse successfully"
             response['status'] = True    
             response['message'] = output_message    

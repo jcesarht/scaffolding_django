@@ -105,7 +105,7 @@ class SerializeTemplate:
                 f'class {class_name}Serializer(serializers.ModelSerializer):\n\n',
                 '   class Meta:\n',
                 f'      model = {class_name}\n',
-                f'      field = {tuple(fields_entity)}\n',
+                f'      fields = {tuple(fields_entity)}\n',
                 f'      {read_only_fields_code}\n'
             ]
             response['data'] = content

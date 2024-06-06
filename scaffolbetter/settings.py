@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'scaffolding',
     'empleados_app',
+    'solicitudes_app',
 ]
 
 MIDDLEWARE = [
