@@ -7,9 +7,11 @@ import importlib
 #import settings conf 
 from django.conf import settings as __dgsettings__
 import subprocess
+#Import our librarys based on template
 from .template.core.serialize.serialize_temp import SerializeTemplate
 from .template.core.viewset.viewset import viewSetTemplate
 from .template.core.url.route import RouteTemplate
+from  .manager_files_backups import ManagerSettingFile
 except_message = ''
 class InspectDB:
     # initialize module
@@ -55,7 +57,19 @@ class InspectDB:
                 output_message = 'appname can not be empty'
                 raise ValueError(output_message)
             __enviroment__.setdefault('DJANGO_SETTINGS_MODULE', self.__project_name + '.settings')
-            
+            # prepare the copy folder in case to restore
+            msf = ManagerSettingFile()
+            msf.project_name = self.__project_name
+            copy_setting = msf.copy_setting_file()
+            if(copy_setting['status']):
+                print(copy_setting['message'])
+            else:
+                print('settings.py did not create')
+            copy_url = msf.copy_url_file()
+            if(copy_url['status']):
+                print(copy_url['message'])
+            else:
+                print('urls.py file did not create')
             #get cursor where database is connected 
             self.__cursor = __con__.cursor()
             #check which database ENGINE is connected. (mysql, postgrest or sqlite)
