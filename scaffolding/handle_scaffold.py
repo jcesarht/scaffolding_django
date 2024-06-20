@@ -22,6 +22,7 @@ class InspectDB:
         self.__initialize = False
         self.__cursor = None
         self.__sufix_app = '_app'
+        self.__manager_setting_file = ManagerSettingFile()
 
     # Setting the database table, tables or  the whole database
     def database_target(self,target_param):
@@ -58,15 +59,18 @@ class InspectDB:
                 raise ValueError(output_message)
             __enviroment__.setdefault('DJANGO_SETTINGS_MODULE', self.__project_name + '.settings')
             # prepare the copy folder in case to restore
-            msf = ManagerSettingFile()
-            msf.project_name = self.__project_name
-            copy_setting = msf.copy_setting_file()
+            self.__manager_setting_file.project_name = self.__project_name
+            copy_setting = self.__manager_setting_file.copy_setting_file()
             if(copy_setting['status']):
+                # Create config file to restore
+                self.__manager_setting_file.create_config_file()
                 print(copy_setting['message'])
             else:
                 print('settings.py did not create')
-            copy_url = msf.copy_url_file()
+            copy_url = self.__manager_setting_file.copy_url_file()
             if(copy_url['status']):
+                # Create config file to restore
+                self.__manager_setting_file.create_config_file()
                 print(copy_url['message'])
             else:
                 print('urls.py file did not create')
@@ -263,6 +267,7 @@ class InspectDB:
                 raise ValueError("Serialization was not created")
             response['status']  = True
             response['message'] = 'serialize file process was executed successfully'
+            response['data'] = [serialize_file.entitys_fields, serialize_file.entitys_fields_only_read]
         except ValueError as e:
             response['message'] = e
         return response
@@ -542,7 +547,13 @@ class InspectDB:
                 if (not is_main_urls_register['status']):
                     output_message  = f"{entity} Main urls process has not been installed successfully. Please reset the process"
                     raise ValueError(output_message)
-                
+                self.__manager_setting_file.apps = {
+                    'app': entity + self.__sufix_app,
+                    'fields': is_serialize_implement['data'][0],
+                    'fields_only_read': is_serialize_implement['data'][1],
+                    'auth':False
+                }
+                self.__manager_setting_file.create_config_file()
             output_message = "API created successfully"
             response['status'] = True    
             response['message'] = output_message    
@@ -570,23 +581,28 @@ class InspectDB:
                 targetdb = self.__alldbtables
             # Import the function to delete folders 
             import shutil
-            content_setting = ''
-            #restore urls.py in main project
-            with open(f'./{self.__project_name}/urls-copy.py','r') as file:
-                content_setting = file.readlines()
-            with open(f'./{self.__project_name}/urls.py','w') as file:
-                file.writelines(content_setting)
             
+            #restore urls.py in main project
+            msf = self.__manager_setting_file
+            msf.project_name = self.main_project_name
+            
+            #restore the urls.py file
+            restore_file = msf.restore_file('url')
+            if(restore_file['status']):
+                print("urls.py was restored")
+            else:
+                raise ValueError(msf['message'])
             #restore the settings in main project
-            with open(f'./{self.__project_name}/settings-copy.py','r') as file:
-                content_setting = file.readlines()
-            with open(f'./{self.__project_name}/settings.py','w') as file:
-                file.writelines(content_setting)
+        
+            restore_file = msf.restore_file('setting')
+            if(restore_file['status']):
+                print("settings.py was restored")
+            else:
+                raise ValueError(msf['message'])
             for entity in targetdb:
                 shutil.rmtree("./"+entity + self.__sufix_app, ignore_errors=True)
                 output_message = f'{entity + self.__sufix_app} deleted successfully'
                 print(output_message)
-            content_setting = ''
             output_message = "Process reverse successfully"
             response['status'] = True    
             response['message'] = output_message    

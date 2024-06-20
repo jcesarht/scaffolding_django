@@ -1,0 +1,32 @@
+{
+    "copy_setting": false,
+    "copy_urls": false,
+    "create_app": [
+        {
+            "app": "empleados_app",
+            "fields": [
+                "emp_id",
+                "fecha_ingreso",
+                "nombre",
+                "salario"
+            ],
+            "fields_only_read": [],
+            "auth": false
+        },
+        {
+            "app": "solicitudes_app",
+            "fields": [
+                "sol_id",
+                "codigo",
+                "descripcion",
+                "resumen",
+                "id_empleado",
+                "create_at"
+            ],
+            "fields_only_read": [
+                "create_at"
+            ],
+            "auth": false
+        }
+    ]
+}

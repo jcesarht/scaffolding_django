@@ -5,5 +5,5 @@ class SolicitudesSerializer(serializers.ModelSerializer):
 
    class Meta:
       model = Solicitudes
-      fields = ('create_at',)
+      fields = ('sol_id', 'codigo', 'descripcion', 'resumen', 'id_empleado', 'create_at')
       read_only_fields = ('create_at',) 
