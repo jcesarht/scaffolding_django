@@ -19,6 +19,7 @@ class InspectDB:
         self.__targetdb = ''
         self.__alldbtables = ''
         self.__project_name = ''
+        self.__include_frontend = False
         self.__initialize = False
         self.__cursor = None
         self.__sufix_app = '_app'
@@ -337,7 +338,25 @@ class InspectDB:
         try:
             section_question = section_question_param
             entity = entity_param
-            if(section_question == 'serialization'):
+            if(section_question == 'ask_frontend'):
+                valid_frontend = True
+                while (valid_frontend):
+                    input_frontend = input('Do you want include front end? responde Y/N (Yes/No): ').lower()
+                    if(
+                        input_frontend == 'y'
+                        or input_frontend == 'yes'
+                    ):
+                        valid_frontend = False
+                        self.__include_frontend = True
+                    elif (
+                        input_frontend == 'n'
+                        or input_frontend == 'no'
+                    ):
+                        self.__include_frontend = False
+                        valid_frontend = False
+                    else:
+                        print('Introduce a valid value please')
+            elif(section_question == 'serialization'):
                 list_fields = self.get_all_fields_entity(entity)['data']
                 message_to_user = f'See all fields related to the entity {entity} below'
                 print(message_to_user)
@@ -486,6 +505,8 @@ class InspectDB:
         
         targetdb = self.__targetdb
         try:
+            #ask to user if want frontend
+            self.ask_user('ask_frontend')
             output_message = ''
             if self.__initialize == False:
                 output_message = "Module not initialized successfully"
@@ -532,6 +553,27 @@ class InspectDB:
                 output_message = is_migration_created['message']
                 print(output_message)
                 is_serialize_implement = self.create_serialization(entity)
+                fields = is_serialize_implement['data'][0]
+                feature_fields={}
+                #If frontend is true then ask the user about required
+                if(self.__include_frontend):
+                    for field in fields:
+                        verify_input = True
+                        while(verify_input):
+                            is_required = input(f"Is it {field} an input required? answer y/n yes/no: ")
+                            if(is_required == 'y' or is_required == 'yes'):
+                                feature_fields[field] = {
+                                    'required': True
+                                }
+                                verify_input = False
+                            elif(is_required == 'n' or is_required == 'no'):
+                                feature_fields[field] = {
+                                    'required': False
+                                }
+                                verify_input = False
+                            if(verify_input):
+                                print('Introduce a valid value. y/n')
+                            
                 if (not is_serialize_implement['status']):
                     output_message  = f"{entity} serialization process has not been finished. Please reset the process"
                     raise ValueError(output_message)
@@ -549,7 +591,7 @@ class InspectDB:
                     raise ValueError(output_message)
                 self.__manager_setting_file.apps = {
                     'app': entity + self.__sufix_app,
-                    'fields': is_serialize_implement['data'][0],
+                    'fields': feature_fields,
                     'fields_only_read': is_serialize_implement['data'][1],
                     'auth':False
                 }

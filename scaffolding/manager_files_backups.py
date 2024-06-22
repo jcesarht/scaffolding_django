@@ -104,8 +104,36 @@ class ManagerSettingFile:
             response['message'] = e
         return response
     
+    #Check if settings.py file has been copied
+    def check_setting_files_copied(self):
+        response = {
+            'status' : False,
+            'message' : '',
+            'data' : False
+        }
+        try:
+            destinity_file = f'./{self.__backup_path}/settings.py'
+            if(sopath.isfile(destinity_file)):
+                response['data'] = True
+            response['status']  = True
+            response['message'] = 'Vefify files is finished'
+        except ValueError as e:
+            response['message'] = e
+        return response        
+    
+    #Create config file about user's choises 
     def create_config_file(self):
         import json
+        check_setting_files_copied = False
+        check_url_files_copied = False
+        destinity_file = f'./{self.__backup_path}/settings.py'
+        if(sopath.isfile(destinity_file)):
+            check_setting_files_copied= True
+        destinity_file = f'./{self.__backup_path}/urls.py'
+        if(sopath.isfile(destinity_file)):
+            check_url_files_copied= True
+        self.__content_setup['copy_setting'] = check_setting_files_copied
+        self.__content_setup['copy_urls'] = check_url_files_copied
         print('creating config file',self.__content_setup)
         path_config = self.__file_config_path + self.__file_config_name
         config_file = open(path_config,'+w')
