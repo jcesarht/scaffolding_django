@@ -134,9 +134,17 @@ class ManagerSettingFile:
             check_url_files_copied= True
         self.__content_setup['copy_setting'] = check_setting_files_copied
         self.__content_setup['copy_urls'] = check_url_files_copied
-        print('creating config file',self.__content_setup)
         path_config = self.__file_config_path + self.__file_config_name
         config_file = open(path_config,'+w')
         content = json.dumps(self.__content_setup)
         config_file.writelines(content)
         
+        print(f'config file was created in {path_config}')
+    #Obtaine config file
+    def get_config_file(self):
+        import json
+        contain = ''
+        path_config = self.__file_config_path + self.__file_config_name
+        with open(path_config,'+r') as file:
+            contain = file.readline()    
+        return json.loads(contain)

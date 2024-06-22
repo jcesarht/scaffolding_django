@@ -610,17 +610,8 @@ class InspectDB:
             'message': ''
         }
         try:
-            targetdb = self.__targetdb
-            if ( targetdb != '.' and targetdb != 'all' ):
-                target_list = targetdb.split(',')
-                #Verify if all param's tables exists
-                for table in target_list:
-                    if(table not in self.__alldbtables):
-                        output_message  = f"Table {table} not exist in database"
-                        raise ValueError(output_message)
-                targetdb = target_list
-            else:
-                targetdb = self.__alldbtables
+           
+            config_file = self.__manager_setting_file.get_config_file()
             # Import the function to delete folders 
             import shutil
             
@@ -641,9 +632,10 @@ class InspectDB:
                 print("settings.py was restored")
             else:
                 raise ValueError(msf['message'])
-            for entity in targetdb:
-                shutil.rmtree("./"+entity + self.__sufix_app, ignore_errors=True)
-                output_message = f'{entity + self.__sufix_app} deleted successfully'
+            for entity in config_file['create_app']:
+                app_name = entity['app']
+                shutil.rmtree("./"+app_name, ignore_errors=True)
+                output_message = f'{app_name} deleted successfully'
                 print(output_message)
             output_message = "Process reverse successfully"
             response['status'] = True    
