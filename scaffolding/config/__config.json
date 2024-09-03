@@ -1,1 +1,20 @@
-{"copy_setting": true, "copy_urls": true, "create_app": [{"app": "empleados_app", "fields": {}, "fields_only_read": [], "auth": false}, {"app": "solicitudes_app", "fields": {}, "fields_only_read": ["create_at"], "auth": false}]}
+{
+    "copy_setting": true,
+    "copy_urls": true,
+    "create_app": [
+        {
+            "app": "empleados_app",
+            "fields": {},
+            "fields_only_read": [],
+            "auth": false
+        },
+        {
+            "app": "solicitudes_app",
+            "fields": {},
+            "fields_only_read": [
+                "create_at"
+            ],
+            "auth": false
+        }
+    ]
+}

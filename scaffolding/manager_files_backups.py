@@ -3,6 +3,8 @@ from os import path as sopath, mkdir
 class ManagerSettingFile:
     def __init__(self):
         self.__project_name = ''
+        self.__login_module = ''
+        self.__create_login_module = False
         self.__file_config_name = '__config.json'
         self.__backup_path = './scaffolding/backup_file/'
         self.__file_config_path = './scaffolding/config/'
@@ -19,7 +21,7 @@ class ManagerSettingFile:
     
     #get project name
     @property
-    def project_name(self):
+    def project_name(self)-> str:
         return self.__project_name
     
     #set project name
@@ -37,23 +39,51 @@ class ManagerSettingFile:
         self.__apps.append(add_param)
         self.__content_setup["create_app"] = self.__apps
         
+    #get login module
+    @property
+    def login_module(self)-> str:
+        return self.__login_module
+    
+    #set login module
+    @login_module.setter
+    def login_module(self,login_module_param):
+        self.__login_module = login_module_param
+    
+    #get create login module
+    @property
+    def create_login_module(self)-> bool:
+        return self.__create_login_module
+    
+    #set create login module
+    @create_login_module.setter
+    def create_login_module(self,create_login_module_param: bool):
+        """
+            Set if the login module must be created or not
+        Args:
+            bool (create_login_module): true if have create, else for not create
+        """
+        self.__create_login_module = create_login_module_param
+    
     #Copy setting file from main project
     def copy_setting_file(self):
         response = {
             'status' : False,
             'message' : '',
+            'data' : ''
         }
         try:
             destinity_file = f'./{self.__backup_path}/settings.py'
             if(sopath.isfile(destinity_file)):
                 error_message = 'Already a copy settings.py file'
                 response['status'] = True
+                response['data'] = 'exist'
                 raise ValueError(error_message)
             
             path_setting = f'./{self.__project_name}/settings.py'
             shutil.copy(path_setting,destinity_file)
             # update the step or status copy setting for config file
             self.__content_setup['copy_setting'] = True
+            response['data'] = 'created'
             response['status']  = True
             response['message'] = 'Proccess copy settings were created successfully'
         except ValueError as e:
@@ -64,12 +94,14 @@ class ManagerSettingFile:
         response = {
             'status' : False,
             'message' : '',
+            'data': ''
         }
         try:
             destinity_file = f'./{self.__backup_path}/urls.py'
             if(sopath.isfile(destinity_file)):
                 error_message = 'Already a copy urls.py file'
                 response['status'] = True
+                response['data'] = 'exist'
                 raise ValueError(error_message)
             
             path_setting = f'./{self.__project_name}/urls.py'
@@ -78,6 +110,7 @@ class ManagerSettingFile:
             self.__content_setup['copy_urls'] = True
             response['status']  = True
             response['message'] = 'Proccess copy urls were created successfully'
+            response['data'] = 'created'
         except ValueError as e:
             response['message'] = e
         return response
@@ -104,8 +137,12 @@ class ManagerSettingFile:
             response['message'] = e
         return response
     
-    #Check if settings.py file has been copied
-    def check_setting_files_copied(self):
+    def check_setting_files_copied(self) -> dict:
+        """Check if settings.py file has been copied
+
+        Returns:
+            dict: response with status, message of process and data like a Bool
+        """
         response = {
             'status' : False,
             'message' : '',
@@ -121,8 +158,10 @@ class ManagerSettingFile:
             response['message'] = e
         return response        
     
-    #Create config file about user's choises 
-    def create_config_file(self):
+    def create_scaffolding_config_file(self):
+        """
+        create config file about the scaffolding tool set up by user
+        """
         import json
         check_setting_files_copied = False
         check_url_files_copied = False
@@ -134,14 +173,22 @@ class ManagerSettingFile:
             check_url_files_copied= True
         self.__content_setup['copy_setting'] = check_setting_files_copied
         self.__content_setup['copy_urls'] = check_url_files_copied
+        if(self.__create_login_module):
+            self.__content_setup['login_user'] = {"module_name": self.__login_module}
         path_config = self.__file_config_path + self.__file_config_name
         config_file = open(path_config,'+w')
         content = json.dumps(self.__content_setup)
         config_file.writelines(content)
         
         print(f'config file was created in {path_config}')
+    
     #Obtaine config file
-    def get_config_file(self):
+    def get_scaffolding_config_file(self) -> dict:
+        """Obtaine config file about apps created \" __config.json\" and it features, also login module 
+
+        Returns:
+            dict: return scaffolding config file's content in json format 
+        """
         import json
         contain = ''
         path_config = self.__file_config_path + self.__file_config_name

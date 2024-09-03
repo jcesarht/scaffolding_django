@@ -3,10 +3,14 @@ from django.contrib.auth.models import User
 from django.http import Http404
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework.authtoken.models import Token
 from rest_framework import status as httpstatus
 from .serializer import UserSerializer
-
+#import security
+from rest_framework.authtoken.models import Token
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication, TokenAuthentication
+from rest_framework.decorators import authentication_classes, permission_classes
+from rest_framework.permissions import IsAuthenticated
+# end security module
 __REQUEST__ = None
 
 @api_view(['POST'])
@@ -83,6 +87,8 @@ def signin(request):
 
 '''Retireve user profile'''
 @api_view(['GET'])
+@authentication_classes([TokenAuthentication, SessionAuthentication, BasicAuthentication])
+@permission_classes([IsAuthenticated])
 def profile(request,user_id_param=None):
     
     result = {
@@ -118,6 +124,10 @@ def profile(request,user_id_param=None):
         message_error = 'Your request could not be resolved, please contact support'
         if(user_id == False):
             message_error = 'Field user_id must int type, string not supported'
+        status = httpstatus.HTTP_500_INTERNAL_SERVER_ERROR
+        result['message'] = message_error
+    except:
+        message_error = 'Some was wrong, please contact support'
         status = httpstatus.HTTP_500_INTERNAL_SERVER_ERROR
         result['message'] = message_error
     return Response(result,status=status)

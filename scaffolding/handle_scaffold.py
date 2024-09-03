@@ -20,6 +20,7 @@ class InspectDB:
         self.__alldbtables = ''
         self.__project_name = ''
         self.__include_frontend = False
+        self.__include_login_module = False
         self.__initialize = False
         self.__cursor = None
         self.__sufix_app = '_app'
@@ -62,17 +63,21 @@ class InspectDB:
             # prepare the copy folder in case to restore
             self.__manager_setting_file.project_name = self.__project_name
             copy_setting = self.__manager_setting_file.copy_setting_file()
-            if(copy_setting['status']):
+            if(copy_setting['status'] and copy_setting['data'] == 'created'):
                 # Create config file to restore
-                self.__manager_setting_file.create_config_file()
+                self.__manager_setting_file.create_scaffolding_config_file()
                 print(copy_setting['message'])
+            elif(copy_setting['status'] and copy_setting['data'] == 'exist'):
+                print("setting already exist")
             else:
                 print('settings.py did not create')
             copy_url = self.__manager_setting_file.copy_url_file()
-            if(copy_url['status']):
+            if(copy_url['status'] and copy_url['data'] == 'created'):
                 # Create config file to restore
-                self.__manager_setting_file.create_config_file()
+                self.__manager_setting_file.create_scaffolding_config_file()
                 print(copy_url['message'])
+            elif(copy_url['status'] and copy_url['data'] == 'exist'):
+                print("url.py already exist")
             else:
                 print('urls.py file did not create')
             #get cursor where database is connected 
@@ -348,6 +353,7 @@ class InspectDB:
                     ):
                         valid_frontend = False
                         self.__include_frontend = True
+                        self.__manager_setting_file.create_login_module = True
                     elif (
                         input_frontend == 'n'
                         or input_frontend == 'no'
@@ -381,12 +387,45 @@ class InspectDB:
                         fields_choose_only_read.append(list_fields[(int(field_choose_only_read) - 1)])
                     
                 response['data']  = [fields_choose,fields_choose_only_read]
+                response['message'] = 'input obtained successfully'
+            elif(section_question == 'login'):
+                scaffolding_config_file = self.__manager_setting_file.get_scaffolding_config_file()
+                if 'login_user' not in scaffolding_config_file:     
+                    valid_login = True
+                    login_module_name = ""
+                    while (valid_login):
+                        input_login = input('Do you want login module? responde Y/N (Yes/No): ').lower()
+                        if(
+                            input_login == 'y'
+                            or input_login == 'yes'
+                        ):
+                            
+                            login_module_name = input("what name do you want call the login module?")
+                            if(login_module_name == "" or login_module_name.isnumeric()):
+                                print("Name can not by empty neither be numeric value")
+                                continue
+                            valid_login = False
+                            self.__include_login_module = True
+                            
+                        elif (
+                            input_login == 'n'
+                            or input_login == 'no'
+                        ):
+                            self.__include_login_module = False
+                            valid_login = False
+                        else:
+                            print('Introduce a valid value please')
+                     
+                    response['data'] = login_module_name
+                else:
+                    response['data'] = scaffolding_config_file['login_user']
+                                  
             response['status']  = True
-            response['message'] = 'input obtained successfully'
         except ValueError as e:
             response['message'] = e
+        except Exception as e:
+            response['message'] = e
         return response
-            
             
             
     #Get all fields         
@@ -515,6 +554,10 @@ class InspectDB:
             dbtables = self.get_tables_from_cursor(self.__cursor)
             self.__alldbtables = dbtables['data']
             targetdb = self.__targetdb
+            #ask to user if want login
+            login_module = self.ask_user('login')
+            if ( self.__manager_setting_file.create_login_module):
+                self.__manager_setting_file.login_module = login_module['data'] #module name assigned by the user
             if ( targetdb != '.' and targetdb != 'all' ):
                 target_list = targetdb.split(',')
                 #Verify if all param's tables exists
@@ -525,6 +568,7 @@ class InspectDB:
                 targetdb = target_list
             else:
                 targetdb = self.__alldbtables
+            
             
             for entity in targetdb:
                 
@@ -595,7 +639,7 @@ class InspectDB:
                     'fields_only_read': is_serialize_implement['data'][1],
                     'auth':False
                 }
-                self.__manager_setting_file.create_config_file()
+                self.__manager_setting_file.create_scaffolding_config_file()
             output_message = "API created successfully"
             response['status'] = True    
             response['message'] = output_message    
@@ -611,7 +655,7 @@ class InspectDB:
         }
         try:
            
-            config_file = self.__manager_setting_file.get_config_file()
+            config_file = self.__manager_setting_file.get_scaffolding_config_file()
             # Import the function to delete folders 
             import shutil
             
