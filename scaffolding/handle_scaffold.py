@@ -11,7 +11,8 @@ import subprocess
 from .template.core.serialize.serialize_temp import SerializeTemplate
 from .template.core.viewset.viewset import viewSetTemplate
 from .template.core.url.route import RouteTemplate
-from  .manager_files_backups import ManagerSettingFile
+import template.core.login.login_temp as loginView
+from .manager_files_backups import ManagerSettingFile
 except_message = ''
 class InspectDB:
     # initialize module
@@ -195,26 +196,38 @@ class InspectDB:
         return response
     
     # Create the entity's app
-    def create_app(self,entity_param):
+    def create_app(self,entity_param: str) -> dict:
+        """Create an app or starapp inside of the  application
+
+        Args:
+            entity_param (str): app name
+
+        Raises:
+            ValueError: if initailize in bad
+            ValueError: param appname is empty
+            ValueError: An error occurred creating the app 
+
+        Returns:
+            dict: _description_
+        """
         response = {
             'status': False,
             'message': ''
         }
         try:
-            entity = entity_param
+            appname = entity_param
             if self.__initialize == False:
                 output_message = "Module not initialized for create_app"
                 raise ValueError(output_message)
-            if entity == "":
+            if appname == "":
                 output_message = "Entity have not empty"
                 raise ValueError(output_message)
-            appname = entity + self.__sufix_app
             p = subprocess.run(["py","manage.py","startapp",appname],stdout=subprocess.PIPE)
             if p.returncode != 0:
                     output_message = f"something was wrong to create app {appname} "
                     raise ValueError(output_message)
             response['status'] = True  
-            response['message'] = f'{entity} app created successfully'
+            response['message'] = f'{appname} app created successfully'
         except ValueError as e:
              response['message'] = e
         return response
@@ -390,7 +403,10 @@ class InspectDB:
                 response['message'] = 'input obtained successfully'
             elif(section_question == 'login'):
                 scaffolding_config_file = self.__manager_setting_file.get_scaffolding_config_file()
-                if 'login_user' not in scaffolding_config_file:     
+                if (
+                    scaffolding_config_file['status'] == False or
+                    (scaffolding_config_file['status'] and 'login_user' not in scaffolding_config_file['data'])
+                ):     
                     valid_login = True
                     login_module_name = ""
                     while (valid_login):
@@ -418,7 +434,7 @@ class InspectDB:
                      
                     response['data'] = login_module_name
                 else:
-                    response['data'] = scaffolding_config_file['login_user']
+                    response['data'] = scaffolding_config_file['data']['login_user']['module_name']
                                   
             response['status']  = True
         except ValueError as e:
@@ -556,8 +572,20 @@ class InspectDB:
             targetdb = self.__targetdb
             #ask to user if want login
             login_module = self.ask_user('login')
-            if ( self.__manager_setting_file.create_login_module):
-                self.__manager_setting_file.login_module = login_module['data'] #module name assigned by the user
+            if (self.__include_login_module):
+                login_module_name = login_module['data'] #module name assigned by the user
+                create_login_result = self.create_app(login_module_name)
+                if(create_login_result['status'] == False):
+                    message_error = "Login module has not been created successfully. Please contact support"
+                    raise ValueError(message_error)
+                mlogin = loginView.ManagerLogin()
+                mlogin.login_name = login_module_name
+                cla = mlogin.create_login_app()
+                if(not cla['status']):
+                    message_error = "The login module has not been built successfully. Please contact support."
+                    raise ValueError(message_error)
+                self.__manager_setting_file.login_module =  login_module_name
+                
             if ( targetdb != '.' and targetdb != 'all' ):
                 target_list = targetdb.split(',')
                 #Verify if all param's tables exists
@@ -569,10 +597,9 @@ class InspectDB:
             else:
                 targetdb = self.__alldbtables
             
-            
             for entity in targetdb:
                 
-                is_create_app = self.create_app(entity)
+                is_create_app = self.create_app(entity + self.__sufix_app)
                 if(not is_create_app['status']):
                     output_message  = f"{entity} app has not been created. Please reset the process"
                     raise ValueError(output_message)
@@ -656,34 +683,46 @@ class InspectDB:
         try:
            
             config_file = self.__manager_setting_file.get_scaffolding_config_file()
-            # Import the function to delete folders 
-            import shutil
+            if(config_file['status']):
+                config_file = config_file['data']
+                # Import the function to delete folders 
+                import shutil
+                
+                #restore urls.py in main project
+                msf = self.__manager_setting_file
+                msf.project_name = self.main_project_name
+                
+                #restore the urls.py file
+                restore_file = msf.restore_file('url')
+                if(restore_file['status']):
+                    print("urls.py was restored")
+                else:
+                    raise ValueError(msf['message'])
+                #restore the settings in main project
             
-            #restore urls.py in main project
-            msf = self.__manager_setting_file
-            msf.project_name = self.main_project_name
-            
-            #restore the urls.py file
-            restore_file = msf.restore_file('url')
-            if(restore_file['status']):
-                print("urls.py was restored")
+                restore_file = msf.restore_file('setting')
+                if(restore_file['status']):
+                    print("settings.py was restored")
+                else:
+                    raise ValueError(msf['message'])
+                if(config_file['login_user']):
+                    login_app = config_file['login_user']['module_name']
+                    shutil.rmtree("./"+login_app, ignore_errors=True)
+                    output_message = f'{login_app} deleted successfully'
+                    print(output_message)                    
+                for entity in config_file['create_app']:
+                    app_name = entity['app']
+                    shutil.rmtree("./"+app_name, ignore_errors=True)
+                    output_message = f'{app_name} deleted successfully'
+                    print(output_message)
+                output_message = "Process reverse successfully"
+                response['status'] = True    
+                response['message'] = output_message    
             else:
-                raise ValueError(msf['message'])
-            #restore the settings in main project
-        
-            restore_file = msf.restore_file('setting')
-            if(restore_file['status']):
-                print("settings.py was restored")
-            else:
-                raise ValueError(msf['message'])
-            for entity in config_file['create_app']:
-                app_name = entity['app']
-                shutil.rmtree("./"+app_name, ignore_errors=True)
-                output_message = f'{app_name} deleted successfully'
-                print(output_message)
-            output_message = "Process reverse successfully"
-            response['status'] = True    
-            response['message'] = output_message    
+                output_message = "Nothing for restaure" 
+                response['message'] = output_message   
+                response['status'] = True  
+                print(output_message)  
         except ValueError as e:
             response['message'] = e    
 if __name__ == "__main__":

@@ -27,7 +27,7 @@ class RouteTemplate:
         self.__app_name = app_name_param
         
     # Create a url file 
-    def create_url_file(self):
+    def create_url_file(self,create_login = False):
         response = {
             'status' : False,
             'message' : '',
@@ -35,7 +35,7 @@ class RouteTemplate:
         }
         error_message = ''
         try:
-            content = self.__url_schema()
+            content = self.__url_schema_login() if (create_login) else self.__url_schema()
             if not content['status']:    
                 error_message = 'The viewSet file was not created.'
                 raise ValueError(error_message)
@@ -74,6 +74,38 @@ class RouteTemplate:
                 'router =  routers.DefaultRouter()\n\n',
                 f'router.register("api/{class_name.lower()}", {class_name}ViewSet, "{class_name.lower()}" )\n',
                 'urlpatterns = router.urls',
+            ]
+            response['data'] = content
+            response['status']  = True
+            response['message'] = 'url schema was generated successfully'
+        except ValueError as e:
+            response['message'] = e
+        return response
+    
+    def __url_schema_login(self):
+        response = {
+            'status' : False,
+            'message' : '',
+            'data' : ''
+        }
+        error_message = ''
+        try:
+            app_name = self.__app_name
+            if not app_name:
+                error_message = 'app_name can not by empty'
+                raise ValueError(error_message)
+            
+            content = [
+                '#!/usr/bin/env python3\n',
+                "from django.urls import path, re_path\n",
+                "from django.contrib import admin\n",
+                "from .views import register, signin, profile\n",
+                "admin.autodiscover()\n",
+                "urlpatterns = [\n",
+                f"    path('api/v1/{app_name}/register/',register,name='login_register'),\n",
+                f"    path('api/v1/{app_name}/',signin,name='login_signin'),\n",
+                f"    re_path(r'^api/v1/{app_name}/profile/(?P<user_id_param>[\w-]+)?/?$',profile,name='login_profile'),\n",
+                "]",
             ]
             response['data'] = content
             response['status']  = True

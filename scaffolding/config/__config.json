@@ -4,17 +4,52 @@
     "create_app": [
         {
             "app": "empleados_app",
-            "fields": {},
+            "fields": {
+                "emp_id": {
+                    "required": true
+                },
+                "fecha_ingreso": {
+                    "required": true
+                },
+                "nombre": {
+                    "required": true
+                },
+                "salario": {
+                    "required": true
+                }
+            },
             "fields_only_read": [],
             "auth": false
         },
         {
             "app": "solicitudes_app",
-            "fields": {},
+            "fields": {
+                "sol_id": {
+                    "required": true
+                },
+                "codigo": {
+                    "required": true
+                },
+                "descripcion": {
+                    "required": true
+                },
+                "resumen": {
+                    "required": false
+                },
+                "id_empleado": {
+                    "required": true
+                },
+                "create_at": {
+                    "required": false
+                }
+            },
             "fields_only_read": [
                 "create_at"
             ],
             "auth": false
         }
-    ]
+    ],
+    "login_user": {
+        "module_name": "signin"
+    }
 }

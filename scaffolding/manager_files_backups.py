@@ -190,8 +190,28 @@ class ManagerSettingFile:
             dict: return scaffolding config file's content in json format 
         """
         import json
-        contain = ''
-        path_config = self.__file_config_path + self.__file_config_name
-        with open(path_config,'+r') as file:
-            contain = file.readline()    
-        return json.loads(contain)
+        from os import strerror
+        response = {
+            "status": False,
+            "message": "",
+            "data": []
+        }
+        message = ""
+        try:
+            contain = ''
+            path_config = self.__file_config_path + self.__file_config_name
+            file = open(path_config,'+r')
+            for line in file.readlines():
+                contain +=  line
+            message = "__config.json file copied successfully"
+            response['data'] = json.loads(contain)
+            response['status'] = True
+            response['message'] = message
+        except IOError:
+            message =  "Something was wrong with file. Error IO can not open file "
+            response['message'] = message
+        except Exception as e:
+            message =  "Something was wrong with file. Error "+strerror(e.errno)+" check the process "
+            response['message'] = message
+            
+        return response
