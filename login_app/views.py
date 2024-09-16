@@ -132,9 +132,8 @@ def profile(request,user_id_param=None):
         result['message'] = message_error
     return Response(result,status=status)
 
-'''Verify the fields that coming of request'''
 def __verify_request__(request_param,type_endpoint:str):
-    # Check every field that if required
+    '''Verify the fields that coming of request'''
     def check_field(valid_field,request_field):
         req_fields = list(request_field.data.keys())
         verified_fields = list(filter(lambda field: field not in req_fields, valid_field))
