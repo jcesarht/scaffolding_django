@@ -66,17 +66,11 @@ class viewSetTemplate:
                 error_message = 'class_name can not by empty'
                 raise ValueError(error_message)
             
-            content = [
-                '#!/usr/bin/env python3\n',
-                'from rest_framework import viewsets, permissions\n',
-                f'from .models import {class_name}\n',
-                f'from .serializers import {class_name}Serializer\n\n',
-                f'class {class_name}ViewSet(viewsets.ModelViewSet):\n',
-                f'   queryset = {class_name}.objects.all() \n',
-                f'   permission_classes = [permissions.AllowAny]\n',
-                f'   serializer_class = {class_name}Serializer\n',
-                '   \n'
-            ]
+            schema_view_file = open('schema_view.py','r')
+            content = ''
+            for line in schema_view_file.readlines():
+                content += line
+            
             response['data'] = content
             response['status']  = True
             response['message'] = 'viewSet schema was generated successfully'
