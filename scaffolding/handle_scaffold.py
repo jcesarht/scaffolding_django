@@ -707,14 +707,20 @@ class InspectDB:
                     raise ValueError(msf['message'])
                 if(config_file['login_user']):
                     login_app = config_file['login_user']['module_name']
-                    shutil.rmtree("./"+login_app, ignore_errors=True)
-                    output_message = f'{login_app} deleted successfully'
-                    print(output_message)                    
+                    if(login_app == ''):
+                        print("login module is empty, does not delete")
+                    else:
+                        shutil.rmtree("./"+login_app, ignore_errors=True)
+                        output_message = f'{login_app} deleted successfully'
+                        print(output_message)                    
                 for entity in config_file['create_app']:
                     app_name = entity['app']
-                    shutil.rmtree("./"+app_name, ignore_errors=True)
-                    output_message = f'{app_name} deleted successfully'
-                    print(output_message)
+                    if(app_name == ''):
+                        print(app_name,"can not be deleted")
+                    else:
+                        shutil.rmtree("./"+app_name, ignore_errors=True)
+                        output_message = f'{app_name} deleted successfully'
+                        print(output_message)
                 output_message = "Process reverse successfully"
                 response['status'] = True    
                 response['message'] = output_message    
