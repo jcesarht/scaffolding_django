@@ -329,7 +329,7 @@ class InspectDB:
         try:
             entity = entity_param
             if self.__initialize == False:
-                output_message = "Module not initialized for viewset"
+                output_message = "Module not initialized for view"
                 raise ValueError(output_message)
             if entity == "":
                 output_message = "Entity have not empty"
@@ -340,9 +340,9 @@ class InspectDB:
             route_file.app_name = entity + self.__sufix_app
             response_router = route_file.create_url_file()
             if(not response_router['status']):
-                raise ValueError("Viewset was not created")
+                raise ValueError("View was not created")
             response['status']  = True
-            response['message'] = 'Viewset file process was executed successfully'
+            response['message'] = 'View file process was executed successfully'
         except ValueError as e:
             response['message'] = e
         return response   
@@ -733,4 +733,3 @@ class InspectDB:
             response['message'] = e    
 if __name__ == "__main__":
     print("Sorry this is not main package")
-    exit()

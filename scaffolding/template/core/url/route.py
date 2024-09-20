@@ -37,14 +37,14 @@ class RouteTemplate:
         try:
             content = self.__url_schema_login() if (create_login) else self.__url_schema()
             if not content['status']:    
-                error_message = 'The viewSet file was not created.'
+                error_message = 'The view file was not created.'
                 raise ValueError(error_message)
             
             file_name = f".\\{self.__app_name}\\urls.py"
             serialize_file = open(file_name,'w+')
             serialize_file.writelines(content['data'])
             response['status']  = True
-            response['message'] = 'viewSet was executed successfully'
+            response['message'] = 'view was executed successfully'
         except ValueError as e:
             response['message'] = e
         return response
@@ -69,11 +69,11 @@ class RouteTemplate:
             
             content = [
                 '#!/usr/bin/env python3\n',
-                'from rest_framework import routers\n',
-                f'from .api import {class_name}ViewSet\n\n',
-                'router =  routers.DefaultRouter()\n\n',
-                f'router.register("api/{class_name.lower()}", {class_name}ViewSet, "{class_name.lower()}" )\n',
-                'urlpatterns = router.urls',
+                'from django.urls import re_path\n',
+                'from .views import transaction_data\n\n',
+                'urlpatterns = [\n',
+                f"    re_path(r'^api/v1/{app_name}/(?P<id_param>[\w-]+)?/?$',transaction_data,name = '{app_name}_crud'),\n",
+                ']',
             ]
             response['data'] = content
             response['status']  = True

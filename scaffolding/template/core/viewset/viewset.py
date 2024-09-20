@@ -34,12 +34,12 @@ class viewSetTemplate:
         }
         error_message = ''
         try:
-            content = self.__viewset_schema()
+            content = self.__view_schema()
             if not content['status']:    
                 error_message = 'The viewSet file was not created.'
                 raise ValueError(error_message)
             
-            file_name = f".\\{self.__app_name}\\api.py"
+            file_name = f".\\{self.__app_name}\\views.py"
             serialize_file = open(file_name,'w+')
             serialize_file.writelines(content['data'])
             response['status']  = True
@@ -49,7 +49,7 @@ class viewSetTemplate:
         return response
 
     #contains the schema about the file content
-    def __viewset_schema(self):
+    def __view_schema(self):
         response = {
             'status' : False,
             'message' : '',
@@ -65,13 +65,12 @@ class viewSetTemplate:
             if not class_name:
                 error_message = 'class_name can not by empty'
                 raise ValueError(error_message)
-            
-            schema_view_file = open('schema_view.py','r')
+            schema_view_file = open('.\\scaffolding\\template\\core\\viewset\\schema_view.py','r')
             content = ''
             for line in schema_view_file.readlines():
                 content += line
             
-            response['data'] = content
+            response['data'] = content.replace("{app_name}",class_name)
             response['status']  = True
             response['message'] = 'viewSet schema was generated successfully'
         except ValueError as e:
