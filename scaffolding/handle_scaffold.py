@@ -320,7 +320,20 @@ class InspectDB:
         return response
     
     #Create viewSet file
-    def create_url_file(self,entity_param):
+    def create_url_file(self,entity_param,create_url_file_param = False) -> dict:
+        """ Generate url file into module for router
+
+        Args:
+            entity_param (_type_): entity name module
+            create_url_file_param (bool, optional): Create or not if module is for login. Defaults to False.
+        Raises:
+            ValueError: check the initialize module
+            ValueError: valuate entity parameter
+            ValueError: chek if process is success
+
+        Returns:
+            dict: response 
+        """
         response = {
             'status' : False,
             'message' : '',
@@ -338,11 +351,16 @@ class InspectDB:
             route_file = RouteTemplate()
             route_file.class_name = entity
             route_file.app_name = entity + self.__sufix_app
-            response_router = route_file.create_url_file()
+            response_router = {}
+            if(create_url_file_param):
+                route_file.app_name = entity
+                response_router = route_file.create_url_file(create_url_file_param)
+            else:
+                response_router = route_file.create_url_file()
             if(not response_router['status']):
-                raise ValueError("View was not created")
+                raise ValueError("Url file was not created")
             response['status']  = True
-            response['message'] = 'View file process was executed successfully'
+            response['message'] = 'Url file process was executed successfully'
         except ValueError as e:
             response['message'] = e
         return response   
@@ -366,7 +384,6 @@ class InspectDB:
                     ):
                         valid_frontend = False
                         self.__include_frontend = True
-                        self.__manager_setting_file.create_login_module = True
                     elif (
                         input_frontend == 'n'
                         or input_frontend == 'no'
@@ -422,7 +439,7 @@ class InspectDB:
                                 continue
                             valid_login = False
                             self.__include_login_module = True
-                            
+                            self.__manager_setting_file.create_login_module = True
                         elif (
                             input_login == 'n'
                             or input_login == 'no'
@@ -470,7 +487,7 @@ class InspectDB:
         return response
     
     #Install app in the proyect
-    def install_app(self,entity_param):
+    def install_app(self,entity_param:str,appname_param: str,login_param = False):
         response = {
             'status' : False,
             'message' : '',
@@ -479,7 +496,8 @@ class InspectDB:
         output_message = ''
         try:
             entity = entity_param
-            appname = entity + self.__sufix_app
+            appname = appname_param
+            
             if not entity:
                 output_message = "Entity can not be empty for intall app process"
                 raise ValueError(output_message)
@@ -503,7 +521,11 @@ class InspectDB:
                         break
                     #if find de ] character then add the line with the app name 
                     elif ']' in lines[index]:
-                        lines[index] = line.rstrip()[:-1] + f"    '{appname}',\n]\n"
+                        #install auth.library for login module
+                        if (login_param):
+                            lines[index] = line.rstrip()[:-1] + f"    'rest_framework.authtoken', \n    '{appname}',\n]\n"
+                        else:
+                            lines[index] = line.rstrip()[:-1] + f"    '{appname}',\n]\n"
                         break
             # re write the setting.py
             with open(settings_file, 'w') as f:
@@ -516,7 +538,7 @@ class InspectDB:
             response['message'] = e
         return response
     
-    def config_main_url(self, entity_param):
+    def config_main_url(self, entity_param:str, appname_param: str):
         response = {
             'status' : False,
             'message' : '',
@@ -524,7 +546,7 @@ class InspectDB:
         }
         try:
             entity = entity_param
-            appname = entity + self.__sufix_app
+            appname = appname_param
             if not entity:
                 output_message = "Entity can not be empty for intall app process"
                 raise ValueError(output_message)
@@ -585,7 +607,26 @@ class InspectDB:
                     message_error = "The login module has not been built successfully. Please contact support."
                     raise ValueError(message_error)
                 self.__manager_setting_file.login_module =  login_module_name
+                res_url_file_login = self.create_url_file(login_module_name,True)
+                   
+                if (not res_url_file_login['status']):
+                    raise ValueError(res_url_file_login['message'])
+                print(res_url_file_login['message'])
                 
+                serialize_file_login = SerializeTemplate()
+                serialize_file_login.app_name = login_module_name
+                response_ser_login = serialize_file_login.create_serialize_file(True)
+                if(not response_ser_login['status']):
+                    raise ValueError("File serialization in login was not created")
+                #installing app
+                is_installed_login = self.install_app(login_module_name, login_module_name, True)
+                if(not is_installed_login['status']):
+                    output_message  = f"{login_module_name} install login process has not been finished. Please reset the process"
+                    raise ValueError(output_message)
+                is_main_urls_register_login = self.config_main_url(login_module_name, login_module_name)
+                if (not is_main_urls_register_login['status']):
+                    output_message  = f"{entity} Main urls process has not been installed successfully in login. Please reset the process"
+                    raise ValueError(output_message)
             if ( targetdb != '.' and targetdb != 'all' ):
                 target_list = targetdb.split(',')
                 #Verify if all param's tables exists
@@ -612,7 +653,7 @@ class InspectDB:
                 output_message = is_create_model['message']
                 print(output_message)
                 #installing app
-                is_installed_app = self.install_app(entity)
+                is_installed_app = self.install_app(entity, entity + self.__sufix_app)
                 if(not is_installed_app['status']):
                     output_message  = f"{entity} install app process has not been finished. Please reset the process"
                     raise ValueError(output_message)
@@ -656,7 +697,7 @@ class InspectDB:
                 if (not is_urls_register['status']):
                     output_message  = f"{entity} Urls process has not been finished. Please reset the process"
                     raise ValueError(output_message)
-                is_main_urls_register = self.config_main_url(entity)
+                is_main_urls_register = self.config_main_url(entity, entity + self.__sufix_app)
                 if (not is_main_urls_register['status']):
                     output_message  = f"{entity} Main urls process has not been installed successfully. Please reset the process"
                     raise ValueError(output_message)
@@ -705,7 +746,7 @@ class InspectDB:
                     print("settings.py was restored")
                 else:
                     raise ValueError(msf['message'])
-                if(config_file['login_user']):
+                if "login_user" in config_file:
                     login_app = config_file['login_user']['module_name']
                     if(login_app == ''):
                         print("login module is empty, does not delete")

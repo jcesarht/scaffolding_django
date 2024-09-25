@@ -50,7 +50,7 @@ class SerializeTemplate:
         self.__read_only_fields = fields_param
     
     # Create a Serialize file 
-    def create_serialize_file(self):
+    def create_serialize_file(self, login_serialize_file = False):
         response = {
             'status' : False,
             'message' : '',
@@ -58,7 +58,8 @@ class SerializeTemplate:
         }
         error_message = ''
         try:
-            content = self.__serialize_schema()
+            
+            content = self.__serialize_schema() if (not login_serialize_file) else self.__serialize_login_schema()
             if not content['status']:    
                 error_message = 'The serialized file was not created.'
                 raise ValueError(error_message)
@@ -113,4 +114,32 @@ class SerializeTemplate:
             response['message'] = 'Serializer schema was generated successfully'
         except ValueError as e:
             response['message'] = e
+        return response
+    
+    #contains the schema about the file content
+    def __serialize_login_schema(self):
+        response = {
+            'status' : False,
+            'message' : '',
+            'data' : ''
+        }
+        error_message = ''
+        try:
+                        
+            content = [
+                "#!usr/bin/env/ python3\n",
+                "from rest_framework import serializers\n",
+                "from django.contrib.auth.models import User\n\n",
+                "class UserSerializer(serializers.ModelSerializer):\n",
+                "    class Meta:\n",
+                "        model = User\n",
+                "        fields = ['id','first_name','username','email','password']\n",
+                "        read_only_fields = ('create_at',) \n",
+            ]
+            response['data'] = content
+            response['status']  = True
+            response['message'] = 'Serializer schema was generated successfully'
+        except ValueError:
+            error_message = 'something was wrong with schema serializable in login'
+            response['message'] = error_message
         return response

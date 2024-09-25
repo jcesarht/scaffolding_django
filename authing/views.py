@@ -1,76 +1,4 @@
-class ManagerLogin:
-    def __init__(self):
-        self.__login_name = ''
-    #Get login_name
-    @property
-    def login_name(self):
-        return self.__login_name
-    
-    #Set login_name
-    @login_name.setter
-    def login_name(self, login_name_param):
-        self.__login_name = login_name_param
-    
-    def create_login_app(self) -> dict:
-        """ Create the views for login
-
-        Raises:
-            ValueError: if login name is empty
-
-        Returns:
-            dict: response
-        """
-        response = {
-            'status' : False,
-            'message' : '',
-            'data' : []
-        }
-        try:
-            response_login_schema = self.__login_schema()
-            
-            if not response_login_schema['status']:    
-                error_message = 'The login file was not created.'
-                raise ValueError(error_message)
-            
-            file_name = f".\\{self.__login_name}\\views.py"
-            serialize_file = open(file_name,'w+')
-            serialize_file.writelines(response_login_schema['data'])
-            response['status']  = True
-            response['message'] = 'Login views was executed successfully'
-        except ValueError as e:
-            response['message'] = e
-        return response
-    
-    #contains the schema about the file content
-    def __login_schema(self) -> dict:
-        """ file login must have the content in this schema
-
-        Raises:
-            ValueError: App name can not be emtpy
-
-        Returns:
-            list: response
-        """
-        response = {
-            'status' : False,
-            'message' : '',
-            'data' : ''
-        }
-        error_message = ''
-        try:
-                        
-            content = self.__content_login_file()
-            response['data'] = content
-            response['status']  = True
-            response['message'] = 'Serializer schema was generated successfully'
-        except Exception as e:
-            error_message = e
-            response['message'] = error_message
-        return response
-    
-    def __content_login_file(self) -> list:
-              
-        return ["""from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.models import User
 from django.http import Http404
 from rest_framework.decorators import api_view
@@ -220,5 +148,4 @@ def __verify_request__(request_param,type_endpoint:str):
        valid_fields = ['username','password']
     elif(type_endpoint == 'profile'):
         valid_fields = ['id']
-    check_field(valid_fields,req)"""
-    ]
+    check_field(valid_fields,req)

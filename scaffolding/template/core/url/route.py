@@ -44,7 +44,7 @@ class RouteTemplate:
             serialize_file = open(file_name,'w+')
             serialize_file.writelines(content['data'])
             response['status']  = True
-            response['message'] = 'view was executed successfully'
+            response['message'] = 'url file was executed successfully'
         except ValueError as e:
             response['message'] = e
         return response
