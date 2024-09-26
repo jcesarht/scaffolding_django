@@ -1,1 +1,1 @@
-{"copy_setting": true, "copy_urls": true, "create_app": [{"app": "empleados_app", "fields": {}, "fields_only_read": [], "auth": false}], "login_user": {"module_name": "authing"}}
+{"copy_setting": true, "copy_urls": true, "create_app": [{"app": "empleados_app", "fields": {}, "fields_only_read": [], "auth": false}]}

@@ -306,11 +306,16 @@ class InspectDB:
             if entity == "":
                 output_message = "Entity have not empty"
                 raise ValueError(output_message)
+            #ask the user if he want authetitacation to the module
+            auth_module = False
+            auth_module_choise = self.ask_user('auth')
+            if(auth_module_choise['status']):
+                auth_module = auth_module_choise['data']['auth_module']
             #create viewSet file
             viewset_file = viewSetTemplate()
             viewset_file.class_name = entity
             viewset_file.app_name = entity + self.__sufix_app
-            response_ser = viewset_file.create_viewset_file()
+            response_ser = viewset_file.create_viewset_file(auth_module)
             if(not response_ser['status']):
                 raise ValueError("Viewset was not created")
             response['status']  = True
@@ -377,7 +382,7 @@ class InspectDB:
             if(section_question == 'ask_frontend'):
                 valid_frontend = True
                 while (valid_frontend):
-                    input_frontend = input('Do you want include front end? responde Y/N (Yes/No): ').lower()
+                    input_frontend = input('Do you want include front end? answer Y/N (Yes/No): ').lower()
                     if(
                         input_frontend == 'y'
                         or input_frontend == 'yes'
@@ -427,7 +432,7 @@ class InspectDB:
                     valid_login = True
                     login_module_name = ""
                     while (valid_login):
-                        input_login = input('Do you want login module? responde Y/N (Yes/No): ').lower()
+                        input_login = input('Do you want install login module? answer Y/N (Yes/No): ').lower()
                         if(
                             input_login == 'y'
                             or input_login == 'yes'
@@ -452,7 +457,19 @@ class InspectDB:
                     response['data'] = login_module_name
                 else:
                     response['data'] = scaffolding_config_file['data']['login_user']['module_name']
-                                  
+            elif (section_question == 'auth'):
+                valid_auth = True
+                choice_auth = ''
+                response['data'] = {'auth_module': False}
+                while(valid_auth):
+                    choice_auth = input('Do you want implement auth in this module?')
+                    if (
+                        (choice_auth.lower() == 'y' or choice_auth.lower() == 'yes')
+                        or (choice_auth.lower() == 'n' or choice_auth.lower() == 'no')
+                    ):
+                        valid_auth = False
+                if (choice_auth.lower() == 'y' or choice_auth.lower() == 'yes'):
+                    response['data'] = {'auth_module': True}
             response['status']  = True
         except ValueError as e:
             response['message'] = e
@@ -691,7 +708,7 @@ class InspectDB:
                     raise ValueError(output_message)
                 is_viewset_implement = self.create_viewset_file(entity)
                 if (not is_viewset_implement['status']):
-                    output_message  = f"{entity} viewSet process has not been finished. Please reset the process"
+                    output_message  = f"{entity} view process has not been finished. Please reset the process"
                     raise ValueError(output_message)
                 is_urls_register = self.create_url_file(entity)
                 if (not is_urls_register['status']):

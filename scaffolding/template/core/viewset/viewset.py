@@ -26,7 +26,7 @@ class viewSetTemplate:
         self.__app_name = app_name_param
         
     # Create a viewSet file 
-    def create_viewset_file(self):
+    def create_viewset_file(self, auth_module = False):
         response = {
             'status' : False,
             'message' : '',
@@ -34,7 +34,7 @@ class viewSetTemplate:
         }
         error_message = ''
         try:
-            content = self.__view_schema()
+            content = self.__view_schema(auth_module)
             if not content['status']:    
                 error_message = 'The viewSet file was not created.'
                 raise ValueError(error_message)
@@ -49,7 +49,7 @@ class viewSetTemplate:
         return response
 
     #contains the schema about the file content
-    def __view_schema(self):
+    def __view_schema(self, auth_module_param = False):
         response = {
             'status' : False,
             'message' : '',
@@ -68,6 +68,10 @@ class viewSetTemplate:
             schema_view_file = open('.\\scaffolding\\template\\core\\viewset\\schema_view.py','r')
             content = ''
             for line in schema_view_file.readlines():
+                if(auth_module_param == True):
+                    if('transaction_data' in line):
+                        line = '''@authentication_classes([TokenAuthentication, SessionAuthentication, BasicAuthentication])
+@permission_classes([IsAuthenticated])\n''' + line
                 content += line
             
             response['data'] = content.replace("{app_name}",class_name)
