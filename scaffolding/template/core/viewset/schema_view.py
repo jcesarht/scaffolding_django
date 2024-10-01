@@ -15,6 +15,7 @@ def transaction_data(request,id_param = ''):
     status = httpstatus.HTTP_400_BAD_REQUEST
     data = []
     if request.method == 'POST':
+        __verify_request__(request)
         res = __create_register(request)
         status = res['data']['http_status']
         data = res['data']
@@ -226,7 +227,7 @@ def __delete(id_param:str = None):
     response['data'] = data
     return response
 
-def __verify_request__(request_param,type_endpoint:str):
+def __verify_request__(request_param:Request):
     """verify fields if are required
 
     Args:
@@ -234,16 +235,21 @@ def __verify_request__(request_param,type_endpoint:str):
         type_endpoint (str): type request
     """
     def check_field(valid_field,request_field):
+        """
+        Validate fields required
+        Args:
+            valid_field (list): list of mandatory fields
+            request_field (list): list of inputs from front-end 
+
+        Raises:
+            NameError: An exception is raised when any field required does not exist
+        """
         req_fields = list(request_field.data.keys())
         verified_fields = list(filter(lambda field: field not in req_fields, valid_field))
         if len(verified_fields) > 0:
            raise NameError(f"Field {verified_fields[0]} is missing")
     
     req = request_param
-    if(type_endpoint == 'register'):
-       valid_fields = ['username','password','email','first_name']
-    elif(type_endpoint == 'signin'):
-       valid_fields = ['username','password']
-    elif(type_endpoint == 'profile'):
-        valid_fields = ['id']
+    valid_fields = [{fields_required}]
+    
     check_field(valid_fields,req)     

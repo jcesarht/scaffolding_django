@@ -103,7 +103,7 @@ def register(request):
             user.set_password(serializer.data['password'])
             user.save()
             token = Token.objects.create(user=user)
-            resp['toke'] = token.key
+            resp['token'] = token.key
             resp['user'] = serializer.data
             result['error'] = False 
             result['message'] = 'Admin user created successfully'

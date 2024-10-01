@@ -4,6 +4,7 @@ class viewSetTemplate:
     def __init__(self) -> None:
         self.__app_name = ''
         self.__class_name = ''
+        self.__required_fields = {}
     
     #Get class name
     @property
@@ -24,6 +25,16 @@ class viewSetTemplate:
     @app_name.setter
     def app_name(self, app_name_param):
         self.__app_name = app_name_param
+    
+    #get required fields
+    @property
+    def required_fields (self):
+        return self.__required_fields
+    
+    #Set app name 
+    @required_fields.setter
+    def required_fields(self, required_fields_param):
+        self.__required_fields = required_fields_param
         
     # Create a viewSet file 
     def create_viewset_file(self, auth_module = False):
@@ -69,12 +80,22 @@ class viewSetTemplate:
             content = ''
             for line in schema_view_file.readlines():
                 if(auth_module_param == True):
+                    if('from rest_framework.decorators import api_view' in line):
+                        line += '''from rest_framework.authtoken.models import Token
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication, TokenAuthentication
+from rest_framework.decorators import authentication_classes, permission_classes
+from rest_framework.permissions import IsAuthenticated'''
+
                     if('transaction_data' in line):
                         line = '''@authentication_classes([TokenAuthentication, SessionAuthentication, BasicAuthentication])
 @permission_classes([IsAuthenticated])\n''' + line
                 content += line
-            
-            response['data'] = content.replace("{app_name}",class_name)
+            required_fields = ''
+            for field, value in self.__required_fields.items():
+               if value['required']:
+                    required_fields += '"' +field + '",'
+            content_modified = content.replace("{app_name}",class_name).replace("{fields_required}",required_fields)
+            response['data'] = content_modified
             response['status']  = True
             response['message'] = 'viewSet schema was generated successfully'
         except ValueError as e:

@@ -153,7 +153,7 @@ class ManagerSettingFile:
             if(sopath.isfile(destinity_file)):
                 response['data'] = True
             response['status']  = True
-            response['message'] = 'Vefify files is finished'
+            response['message'] = 'Verify files is finished'
         except ValueError as e:
             response['message'] = e
         return response        
@@ -214,4 +214,29 @@ class ManagerSettingFile:
             message =  "Something was wrong with file. Error "+strerror(e.errno)+" check the process "
             response['message'] = message
             
+        return response
+    
+    def delete_scaffolding_config_file(self):
+        """delete the scaffolding config file
+
+        Returns:
+            dict: respose about proccess
+        """
+        response = {
+            'status' : False,
+            'message' : '',
+            'data' : []
+        }
+        path_config = self.__file_config_path + self.__file_config_name
+        try:
+            if(not sopath.isfile(path_config)):
+                raise ValueError
+            
+            shutil.rmtree(self.__file_config_path, ignore_errors=True)
+            output_message = f'{self.__file_config_name} deleted successfully'
+            response['status']  = True
+            response['message'] = output_message
+        except ValueError:
+            error_message =  f"Something was wrong with file. Error IO can not be deleted {self.__file_config_name} file "
+            response['message'] = error_message
         return response

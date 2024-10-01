@@ -292,7 +292,7 @@ class InspectDB:
         return response
     
     #Create viewSet file
-    def create_viewset_file(self,entity_param):
+    def create_viewset_file(self,entity_param:str, required_fields_param: dict = {}):
         response = {
             'status' : False,
             'message' : '',
@@ -315,6 +315,7 @@ class InspectDB:
             viewset_file = viewSetTemplate()
             viewset_file.class_name = entity
             viewset_file.app_name = entity + self.__sufix_app
+            viewset_file.required_fields = required_fields_param
             response_ser = viewset_file.create_viewset_file(auth_module)
             if(not response_ser['status']):
                 raise ValueError("Viewset was not created")
@@ -438,7 +439,7 @@ class InspectDB:
                             or input_login == 'yes'
                         ):
                             
-                            login_module_name = input("what name do you want call the login module?")
+                            login_module_name = input("Write the module name: ")
                             if(login_module_name == "" or login_module_name.isnumeric()):
                                 print("Name can not by empty neither be numeric value")
                                 continue
@@ -706,7 +707,7 @@ class InspectDB:
                 if (not is_serialize_implement['status']):
                     output_message  = f"{entity} serialization process has not been finished. Please reset the process"
                     raise ValueError(output_message)
-                is_viewset_implement = self.create_viewset_file(entity)
+                is_viewset_implement = self.create_viewset_file(entity, feature_fields)
                 if (not is_viewset_implement['status']):
                     output_message  = f"{entity} view process has not been finished. Please reset the process"
                     raise ValueError(output_message)
@@ -779,15 +780,21 @@ class InspectDB:
                         shutil.rmtree("./"+app_name, ignore_errors=True)
                         output_message = f'{app_name} deleted successfully'
                         print(output_message)
-                output_message = "Process reverse successfully"
+                result_delete_config = msf.delete_scaffolding_config_file()
+                if not result_delete_config['status'] :
+                    raise ValueError(result_delete_config['message'])
+                
+                print(result_delete_config['message'])
+                output_message = "restore finished successfully"
                 response['status'] = True    
                 response['message'] = output_message    
             else:
-                output_message = "Nothing for restaure" 
+                output_message = "Nothing to restore" 
                 response['message'] = output_message   
                 response['status'] = True  
                 print(output_message)  
         except ValueError as e:
-            response['message'] = e    
+            output_message = e
+            response['message'] = output_message    
 if __name__ == "__main__":
     print("Sorry this is not main package")
