@@ -15,10 +15,19 @@ def transaction_data(request,id_param = ''):
     status = httpstatus.HTTP_400_BAD_REQUEST
     data = []
     if request.method == 'POST':
-        __verify_request__(request)
-        res = __create_register(request)
-        status = res['data']['http_status']
-        data = res['data']
+        verified_fields = __verify_request__(request)
+        if(verified_fields['error']):
+            status = httpstatus.HTTP_400_BAD_REQUEST
+            data = {
+                'error': verified_fields['error'],
+                'message': verified_fields['message'],
+                'http_status': httpstatus.HTTP_400_BAD_REQUEST     
+            }
+        else:
+            res = __create_register(request)
+            status = res['data']['http_status']
+            data = res['data']
+            
     elif request.method == 'PUT':
         if id_param == '':
             status = httpstatus.HTTP_400_BAD_REQUEST
@@ -105,8 +114,8 @@ def __update_register(request: Request,id_param: str):
     }
     data = {}
     try:
-        empleado = get_object_or_404({app_name}, emp_id = id_param)
-        serializer = {app_name}Serializer(empleado, data=request.data)
+        entity_object = get_object_or_404({app_name}, emp_id = id_param)
+        serializer = {app_name}Serializer(entity_object, data=request.data)
         if(serializer.is_valid()):
             serializer.save()    
             response['status']  = True
@@ -154,12 +163,12 @@ def __query(id_param:str = None):
     data = {}
     try:
         if(id_param == None):
-            empleado_model = {app_name}.objects.all()
-            serializer = {app_name}Serializer(empleado_model,many=True)
+            query_set = {app_name}.objects.all()
+            serializer = {app_name}Serializer(query_set,many=True)
             data = serializer.data                
         else:
-            empleado_model = get_object_or_404({app_name}, emp_id = id_param)
-            serializer = {app_name}Serializer(empleado_model)                
+            query_set = get_object_or_404({app_name}, emp_id = id_param)
+            serializer = {app_name}Serializer(query_set)                
             data  = serializer.data
         data = {
             'data': data,
@@ -244,12 +253,21 @@ def __verify_request__(request_param:Request):
         Raises:
             NameError: An exception is raised when any field required does not exist
         """
+        response = {
+            'error': False,
+            'message': ''
+        }
         req_fields = list(request_field.data.keys())
         verified_fields = list(filter(lambda field: field not in req_fields, valid_field))
         if len(verified_fields) > 0:
-           raise NameError(f"Field {verified_fields[0]} is missing")
+           response['error'] = True
+           response['message'] = f"Field {verified_fields[0]} is missing"
+        return response
+    
+    req = request_param
+    valid_fields = ["emp_id","fecha_ingreso",]
     
     req = request_param
     valid_fields = [{fields_required}]
     
-    check_field(valid_fields,req)     
+    return check_field(valid_fields,req)     

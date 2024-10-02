@@ -1,0 +1,27 @@
+{
+    "copy_setting": true,
+    "copy_urls": true,
+    "create_app": [
+        {
+            "app": "empleados_app",
+            "fields": {
+                "emp_id": {
+                    "required": true
+                },
+                "fecha_ingreso": {
+                    "required": true
+                },
+                "nombre": {
+                    "required": false
+                }
+            },
+            "fields_only_read": [
+                "fecha_ingreso"
+            ],
+            "auth": false
+        }
+    ],
+    "login_user": {
+        "module_name": "login"
+    }
+}
