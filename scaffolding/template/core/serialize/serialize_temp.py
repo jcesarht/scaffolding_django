@@ -133,7 +133,7 @@ class SerializeTemplate:
                 "class UserSerializer(serializers.ModelSerializer):\n",
                 "    class Meta:\n",
                 "        model = User\n",
-                "        fields = ['id','first_name','username','email','password']\n",
+                "        fields = ['id','first_name','last_name','username','email','password']\n",
                 "        read_only_fields = ('create_at',) \n",
             ]
             response['data'] = content
