@@ -578,9 +578,9 @@ class InspectDB:
             flag_import = 0
             for index,line in enumerate(lines):
                 if line.startswith('from django.urls import path') and index > 1 and flag_import == 0:
-                    lines[index] = line[: -1] + ", include\n"
-                    flag_import +=1
-                    
+                    if 'include' not in line:
+                        lines[index] = line[: -1] + ", include\n"
+                        flag_import +=1
                 if line.startswith("urlpatterns = ["):
                    lines[index] = line[: -1] + f"\n    path('', include('{appname}.urls')),\n"
             with open(urls_file,'w+') as file:

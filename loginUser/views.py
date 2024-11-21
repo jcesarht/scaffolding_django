@@ -70,7 +70,7 @@ def signin(request):
             request.session['user_id'] = user.id
             token = Token.objects.get_or_create(user=user)
             result['message'] = 'Log in successfully'
-            result['data'] = {'token': token[0].key,'first_name':user.first_name,'last_name':user.last_name}
+            result['data'] = {'token': token[0].key,'first_name':user.first_name,'last_name':user.last_name,'email':user.email}
             result['error'] = False
             status = httpstatus.HTTP_200_OK
     except NameError as ne:
