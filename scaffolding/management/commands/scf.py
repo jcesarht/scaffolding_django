@@ -3,6 +3,7 @@ from django.core.management.base import BaseCommand, CommandParser
 from sys import path
 path.append('.\\scaffolding')
 from scaffolding.handle_scaffold import InspectDB
+from scaffolding.installer_tools.python_tools import PythonInstallersTools
 class Command(BaseCommand):
     help = "Crea un API a partir de una base de datos"
     help = "Create an API from a database|"
@@ -34,6 +35,14 @@ class Command(BaseCommand):
                 raise ValueError(output_message)
             idb.main_project_name = projectname
             if(not options['restore']):
+                # installpython libraries
+                pit = PythonInstallersTools()
+                pit.project_name = projectname
+                check_tools = pit.verify_tools()
+                if check_tools['error']:
+                    print(check_tools['message'])
+                    exit() 
+                    # end to install
                 target = options['targetdb'].strip()
                 if(target == ''):
                     output_message = 'targetdb no puede estar vacio'

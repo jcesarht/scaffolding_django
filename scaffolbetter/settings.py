@@ -41,7 +41,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'scaffolding',
     'rest_framework.authtoken', 
-    'loginUser',
+    'loginAuth',
     'empleados_app',
 ]
 
