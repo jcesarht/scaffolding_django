@@ -6,7 +6,7 @@ from scaffolding.handle_scaffold import InspectDB
 from scaffolding.installer_tools.python_tools import PythonInstallersTools
 class Command(BaseCommand):
     help = "Crea un API a partir de una base de datos"
-    help = "Create an API from a database|"
+    help = "Create an API from a database"
 
     #prepare the argument of command scf
     def add_arguments(self, parser):

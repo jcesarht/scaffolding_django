@@ -1,0 +1,87 @@
+def register_app(setting_list:str,app_name:str, project_name_param:str):
+    
+    response = {
+        'error' : True,
+        'message' : '',
+        'data' : []
+    }
+    try:
+        def get_libraries_registered_in_app(project_name_param:str)->dict:
+            response = {
+                'error' : True,
+                'message' : '',
+                'data' : []
+            }
+            try:
+                
+                import re
+                import json
+                setting_file_path = f'./{project_name_param}/settings.py'
+                setting_file = open(setting_file_path,mode = 'r')
+                content_settings_file = "".join(setting_file.readlines())
+                regular_expression_search = rf"{setting_list} = \[.*?\]" #this is regular expression for extract all characters of intalled_app
+                installed_app = re.search(regular_expression_search,content_settings_file,re.DOTALL).group()    
+                if (installed_app):
+                        regular_expression_search = r"\[.*?\]" #this is regular expression for extract all characters of intalled_app
+                        app_list = re.search(regular_expression_search,installed_app,re.DOTALL).group()
+                        app_list = app_list.replace("'",'"').replace(" ","").replace("\n","")
+                        app_list = app_list.rstrip(',]') + "]"
+                        app_list = json.loads(app_list)
+                        if (not app_list):
+                            raise ValueError("settings.py file is bad formated")
+                response['error']  = False
+                response['message'] = 'Proccess were executed successfully'
+                response['data'] = app_list
+            except ValueError as ve:
+                response['message'] = ve
+            except Exception as e:
+                response['message'] = e
+            return response
+
+        def add_library_in_app(libraries_app_param:list,project_name_param:str):
+            response = {
+                'error' : True,
+                'message' : '',
+                'data' : []
+            }
+            try:
+                register_app = libraries_app_param
+                import re
+                setting_file_path = f'./{project_name_param}/settings.py'
+                setting_file = open(setting_file_path,'r')
+                content_settings_file = "".join(setting_file.readlines())
+                regular_expression_search = rf"{setting_list} = \[(.*?)\]" #this is regular expression for extract all characters of intalled_app
+                app_installer_list_updated_regular_expression = (
+                    f"{setting_list} = [\n    " + ",\n    ".join(f"'{app}'" for app in register_app) + "\n]"
+                )
+                app_installer_list_updated = re.sub(regular_expression_search, app_installer_list_updated_regular_expression, content_settings_file,flags=re.DOTALL)
+                if(app_installer_list_updated and app_installer_list_updated.strip() != ""):
+                    
+                    setting_file = open(setting_file_path,'w')
+                    setting_file.writelines(app_installer_list_updated)
+                else:
+                    setting_file.close()
+                    raise ValueError("Something was wrong with settings.py file while editing it")
+                response['error']  = False
+                response['message'] = "Proccess was registered successfully"
+            except ValueError as ve:
+                response['message'] = ve
+            except Exception as e:
+                response['message'] = e
+            return response
+        installed_app = get_libraries_registered_in_app(project_name_param)
+        if installed_app['error']:
+            raise ValueError("Something was wrong with apps list.")
+        
+        if app_name in installed_app['data']:
+            raise ValueError("The module already register. Did not register")
+        
+        installed_app['data'].append(app_name)
+        registered_app = add_library_in_app(installed_app['data'], project_name_param)
+        if(registered_app['error']):
+            raise ValueError(registered_app['message'])
+        response['error']  = False
+        response['message'] = 'Proccess were executed successfully'
+    except ValueError as e:
+        response['message'] = e
+    return response
