@@ -51,7 +51,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
-    'corsheaders.middleware.CorsMiddleware'
 ]
 
 ROOT_URLCONF = 'scaffolbetter.urls'
@@ -159,6 +158,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 #CORS Customized
 CORS_ALLOWED_ORIGINS = [
-    "https://tu-dominio.com",
-    "https://otro-dominio.com",
+    "https://tu_dominio.com",
+    "https://otro_dominio.com",
 ]
+                

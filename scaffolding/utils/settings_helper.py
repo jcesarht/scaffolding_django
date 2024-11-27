@@ -56,7 +56,6 @@ def register_app(setting_list:str,app_name:str, project_name_param:str):
                 )
                 app_installer_list_updated = re.sub(regular_expression_search, app_installer_list_updated_regular_expression, content_settings_file,flags=re.DOTALL)
                 if(app_installer_list_updated and app_installer_list_updated.strip() != ""):
-                    
                     setting_file = open(setting_file_path,'w')
                     setting_file.writelines(app_installer_list_updated)
                 else:
@@ -82,6 +81,28 @@ def register_app(setting_list:str,app_name:str, project_name_param:str):
             raise ValueError(registered_app['message'])
         response['error']  = False
         response['message'] = 'Proccess were executed successfully'
+    except ValueError as e:
+        response['message'] = e
+    return response
+
+def register_app_in_line(setting_line_param:str, project_name_param:str):
+    response = {
+        'error' : True,
+        'message' : '',
+        'data' : []
+    }
+    try:
+        import re
+        setting_file_path = f'./{project_name_param}/settings.py'
+        setting_file = open(setting_file_path,'r+')
+        content_settings_file = "".join(setting_file.readlines())
+        match_line = re.search( setting_line_param, content_settings_file)
+        if(match_line):
+            response['message'] = f'The configuration {setting_line_param} in settings exists already'
+        else:
+            setting_file.writelines(setting_line_param)
+            response['message'] = f'The configuration {setting_line_param} in settings was added'
+        response['error']  = False
     except ValueError as e:
         response['message'] = e
     return response

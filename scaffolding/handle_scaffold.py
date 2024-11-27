@@ -511,6 +511,7 @@ class InspectDB:
             'message' : '',
             'data' : []
         }
+        from utils.settings_helper import register_app
         output_message = ''
         try:
             entity = entity_param
@@ -520,35 +521,9 @@ class InspectDB:
                 output_message = "Entity can not be empty for intall app process"
                 raise ValueError(output_message)
             
-            # path to settings.py file
-            settings_file = f'./{self.__project_name}/settings.py'
-
-            # we read the file
-            with open(settings_file, 'r') as f:
-                lines = f.readlines()
-            
-            # search INSTALLED_APPS line and add it
-            line_number = 0
-            for index, line in enumerate(lines):
-                if line.startswith('INSTALLED_APPS'):
-                    line_number = index
-                # in case fin INSTALLED_APPS so start to search the app name or ] character    
-                if line_number > 0:
-                    #if find the app is installed then break and nothing for make
-                    if appname in lines[index]:
-                        break
-                    #if find de ] character then add the line with the app name 
-                    elif ']' in lines[index]:
-                        #install auth.library for login module
-                        if (login_param):
-                            lines[index] = line.rstrip()[:-1] + f"    'rest_framework.authtoken', \n    '{appname}',\n]\n"
-                        else:
-                            lines[index] = line.rstrip()[:-1] + f"    '{appname}',\n]\n"
-                        break
-            # re write the setting.py
-            with open(settings_file, 'w') as f:
-                f.writelines(lines)
-    
+            result_register_app = register_app('INSTALLED_APPS',appname,self.__project_name)
+            if result_register_app['error']:
+                raise ValueError(result_register_app['message'])
             response['status']  = True
             output_message = f"{entity} was installed successfully"
             response['message'] = output_message

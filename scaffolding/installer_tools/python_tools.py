@@ -67,7 +67,7 @@ class PythonInstallersTools:
         return response
     
     def __install_tool(self, tool_param: str):
-        from utils.settings_helper import register_app
+        from utils.settings_helper import register_app, register_app_in_line
         """Install a library or module or app in app_intaller array in the settings.py file
 
         Args:
@@ -89,6 +89,17 @@ class PythonInstallersTools:
                 register_app_result = register_app('INSTALLED_APPS',tool,self.__project_name)
                 if (register_app_result['error']):
                     raise ValueError ("An error occurred while trying to register module")
+                line = '''
+# CORS Allowed: ALL
+CORS_ALLOW_ALL_ORIGINS = True
+
+#CORS Customized
+CORS_ALLOWED_ORIGINS = [
+    "https://tu_dominio.com",
+    "https://otro_dominio.com",
+]
+                '''
+                register_app_result = register_app_in_line(line,self.__project_name)
             elif (tool == 'rest_framework'):
                 print(f"starting {tool} installation")
                 process = subprocess.run(["pip","install","djangorestframework"],capture_output=True, text=True)
