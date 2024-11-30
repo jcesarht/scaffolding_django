@@ -72,13 +72,13 @@ def register_app(setting_list:str,app_name:str, project_name_param:str):
         if installed_app['error']:
             raise ValueError("Something was wrong with apps list.")
         
-        if app_name in installed_app['data']:
-            raise ValueError("The module already register. Did not register")
+        if app_name not in installed_app['data']:
+            installed_app['data'].append(app_name)
+            registered_app = add_library_in_app(installed_app['data'], project_name_param)
         
-        installed_app['data'].append(app_name)
-        registered_app = add_library_in_app(installed_app['data'], project_name_param)
-        if(registered_app['error']):
-            raise ValueError(registered_app['message'])
+            if(registered_app['error']):
+                raise ValueError(registered_app['message'])
+        
         response['error']  = False
         response['message'] = 'Proccess were executed successfully'
     except ValueError as e:

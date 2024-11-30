@@ -41,7 +41,6 @@ class Command(BaseCommand):
                 check_tools = pit.verify_tools()
                 if check_tools['error']:
                     print(check_tools['message'])
-                    exit() 
                     # end to install
                 target = options['targetdb'].strip()
                 if(target == ''):

@@ -114,10 +114,10 @@ CORS_ALLOWED_ORIGINS = [
                     raise ValueError ("An error occurred while trying to register module")
                 register_app_result = register_app('MIDDLEWARE','django.middleware.security.SecurityMiddleware',self.__project_name)
                 if register_app_result['error']:
-                    raise ValueError ("An error occurred while trying to register Middleware")
+                    raise ValueError ("An error occurred while trying to register Middleware django.middleware.security.SecurityMiddleware")
                 register_app_result = register_app('MIDDLEWARE','corsheaders.middleware.CorsMiddleware',self.__project_name)
                 if register_app_result['error']:
-                    raise ValueError ("An error occurred while trying to register Middleware")
+                    raise ValueError ("An error occurred while trying to register Middleware corsheaders.middleware.CorsMiddleware")
                 
             else:
                 raise ValueError(f"Library, module or app {tool} not found")
