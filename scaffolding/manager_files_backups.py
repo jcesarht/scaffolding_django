@@ -207,8 +207,8 @@ class ManagerSettingFile:
             response['data'] = json.loads(contain)
             response['status'] = True
             response['message'] = message
-        except IOError:
-            message =  "Something was wrong with file. Error IO can not open file "
+        except IOError as ioe:
+            message =  "Something was wrong with file. Error IO can not open file " + ioe
             response['message'] = message
         except Exception as e:
             message =  "Something was wrong with file. Error "+strerror(e.errno)+" check the process "
@@ -217,7 +217,7 @@ class ManagerSettingFile:
         return response
     
     def delete_scaffolding_config_file(self):
-        """delete the scaffolding config file
+        """reset the scaffolding config file
 
         Returns:
             dict: respose about proccess
@@ -229,11 +229,10 @@ class ManagerSettingFile:
         }
         path_config = self.__file_config_path + self.__file_config_name
         try:
-            if(not sopath.isfile(path_config)):
-                raise ValueError
-            
+            config_file = open(path_config,'+w')
+            config_file.writelines(['{}'])
             shutil.rmtree(self.__file_config_path, ignore_errors=True)
-            output_message = f'{self.__file_config_name} deleted successfully'
+            output_message = f'{self.__file_config_name} reset successfully'
             response['status']  = True
             response['message'] = output_message
         except ValueError:

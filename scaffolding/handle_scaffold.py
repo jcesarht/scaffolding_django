@@ -742,7 +742,7 @@ class InspectDB:
                 if "login_user" in config_file:
                     login_app = config_file['login_user']['module_name']
                     if(login_app == ''):
-                        print("login module is empty, does not delete")
+                        print("login module is empty, did not delete")
                     else:
                         shutil.rmtree("./"+login_app, ignore_errors=True)
                         output_message = f'{login_app} deleted successfully'

@@ -14,12 +14,12 @@ class Command(BaseCommand):
                         puedes escribir varias tablas separadas por coma "," sin espacios.'''
         target_text_help = '''Specify which table to update. You can also use (all) or (.) to apply it to all tables.\n
                             You can write more that one table separated with comma "," without spaces'''
-        appname_text_help = 'Coloca el nombre de la app o modulo principal del proyecto'
-        appname_text_help = 'Enter the name of the main app or main module name of the project'
+        project_name_text_help = 'Coloca el nombre de la app o modulo principal del proyecto'
+        project_name_text_help = 'Enter the name of the main app or main module name of the project'
         restore_text_help = 'Restaura el proyecto a su estado original'
         restore_text_help = 'Restore it project to begin status'
         parser.add_argument('--targetdb', nargs='?', type=str,help=target_text_help)
-        parser.add_argument('projectname', nargs=1, type=str,help=appname_text_help)
+        parser.add_argument('projectname', nargs=1, type=str,help=project_name_text_help)
         parser.add_argument('--restore', nargs='?', type=str,const='',help=restore_text_help)
     
     #excecute the command's action 
@@ -41,7 +41,7 @@ class Command(BaseCommand):
                 check_tools = pit.verify_tools()
                 if check_tools['error']:
                     print(check_tools['message'])
-                    # end to install
+                # end to install libraries
                 target = options['targetdb'].strip()
                 if(target == ''):
                     output_message = 'targetdb no puede estar vacio'

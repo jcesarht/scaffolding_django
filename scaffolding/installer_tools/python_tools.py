@@ -60,9 +60,9 @@ class PythonInstallersTools:
                         
             setting_file.close()
         except FileNotFoundError as fnf:
-            response['message'] = fnf
+            response['message'] = fnf.__str__()
         except ValueError as ve:
-            response['message'] = ve
+            response['message'] = ve.__str__()
             
         return response
     
@@ -126,6 +126,6 @@ CORS_ALLOWED_ORIGINS = [
         except subprocess.CalledProcessError as process_error:    
             response['message'] = process_error
         except ValueError as general_exception:
-            response['message'] = general_exception
+            response['message'] = general_exception.__str__()
                     
         return response
