@@ -256,27 +256,31 @@ class ImplementVue:
             'data' : []
         }
         project_vue_name = self.__project_name  + self.__sufix_project_name
+        import subprocess
+        process = '';
         try:
             import os
-            import subprocess
             destinity_path = self.__root_destinity_path + project_vue_name
             message = "vue has been installed successfully"
             if not os.path.exists(destinity_path):
-                commands_install = [
-                    "npx"
-                    ,"create-vite@latest"
-                    ,project_vue_name
-                    ,"--template vue"
-                    ,f"&& cd {project_vue_name}"
-                    ,"&& npm install axios vue-router"
-                    ,"&& npm install pinia"
-                ]
-                process = subprocess.run(commands_install,cwd=os.getcwd(),capture_output=True, text=True)
+                commands_install = "npx create-vite@latest "+destinity_path+" --template vue"
+                process = subprocess.run(commands_install,cwd=os.getcwd(),capture_output=True,check=True, text=True,shell=True)
+                print(process.stdout)
+                
+                project_path = os.path.join(os.getcwd(), destinity_path)
+                commands_install = ["npm", "install", "axios", "vue-router"]
+                process = subprocess.run(commands_install,cwd=project_path,capture_output=True, check=True ,text=True,shell=True)
+                print(process.stdout)
+                
+                commands_install = ["npm", "install", "pinia"]
+                process = subprocess.run(commands_install,cwd=project_path,capture_output=True, check=True ,text=True, shell=True)
                 print(process.stdout)
             else:
                 message = f'Project {project_vue_name} already exists, nothing to do'
             response['error']  = False
             response['message'] = message
+        except subprocess.CalledProcessError as cpe:
+            response['message'] = cpe.stderr
         except ValueError as ve:
             response['message'] = ve.__str__()
         except Exception as ex:
