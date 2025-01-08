@@ -48,8 +48,8 @@
     import UIInputPassword from '@/components/UIComponents/UIInputPassword.vue';
     import UIButton from '@/components/UIComponents/UIButton.vue';
     import baseInfoSign from '@/components/base/baseInfoSign.vue';
-    import { useLogin } from '../composables/%module_name%';
-    import { useLoginUserStore } from '../stores/use%module_name%Store';
+    import { useLogin } from '../composables/use%module_name%';
+    import { use%module_name%Store } from '../stores/use%module_name%Store';
     import { useOverlay } from '@/stores/useOverlay';
 
     const router = useRouter()
@@ -60,7 +60,7 @@
     const inputUser = ref(null)
     const inputPassword = ref(null)
     const buttonLogin = ref(null)
-    const store = useLoginUserStore()
+    const store = use%module_name%Store()
     const overlay = useOverlay()
 
     const { loginAction }  = store

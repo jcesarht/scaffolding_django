@@ -273,6 +273,6 @@ def __verify_request__(request_param:Request):
     valid_fields = ["emp_id","fecha_ingreso",]
     
     req = request_param
-    valid_fields = ["emp_id","fecha_ingreso","nombre","salario",]
+    valid_fields = ["emp_id","nombre",]
     
     return check_field(valid_fields,req)     

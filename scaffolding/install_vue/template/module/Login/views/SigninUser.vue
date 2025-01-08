@@ -70,7 +70,7 @@
     import UIButton from '@/components/UIComponents/UIButton.vue';
     import baseInfoSign from '@/components/base/baseInfoSign.vue';
     import { useOverlay } from '@/stores/useOverlay';
-    import { useSignin } from '../composables/%module_name%';
+    import { useSignin } from '../composables/use%module_name%';
 
     //reference compomenent
     const buttonLogin = ref(null)

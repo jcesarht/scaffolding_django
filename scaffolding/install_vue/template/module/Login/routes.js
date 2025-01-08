@@ -1,6 +1,6 @@
-import LoginUser from '@/module/loginUser/views/%module_name%.vue'
-import PasswordRecovery from '@/module/loginUser/views/PasswordRecovery.vue'
-import SigninUser from '@/module/loginUser/views/SigninUser.vue'
+import LoginUser from '@/module/%module_name%/views/%module_name%.vue'
+import PasswordRecovery from '@/module/%module_name%/views/PasswordRecovery.vue'
+import SigninUser from '@/module/%module_name%/views/SigninUser.vue'
 
 
 const routesLoginUser = [

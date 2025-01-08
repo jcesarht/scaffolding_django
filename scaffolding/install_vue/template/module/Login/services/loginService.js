@@ -14,7 +14,7 @@ export const %module_name%Service = {
             }
         }
 
-        const loginURL = 'api/v1/loginUser/'
+        const loginURL = 'api/v1/%module_name%/'
         response.data.data = await axiosInstance.post(loginURL,fields)
         response.data.http_code = response.data.data.status
         response.data.data = response.data.data.data
@@ -39,7 +39,7 @@ export const %module_name%Service = {
             password : dataUser.password,
         }
 
-        const loginURL = 'api/v1/loginUser/register/'
+        const loginURL = 'api/v1/%module_name%/register/'
         response.data.data = await axiosInstance.post(loginURL,fields)
         response.data.http_code = response.data.data.status
         response.data.data = response.data.data.data

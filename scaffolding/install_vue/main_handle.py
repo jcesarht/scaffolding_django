@@ -68,6 +68,7 @@ class ImplementVue:
         destinity_path = self.__root_destinity_path + self.__project_name  + self.__sufix_project_name + '/src/components'
         try:
             
+            shutil.rmtree(destinity_path)
             shutil.copytree(path_components,destinity_path)
             
             response['error']  = False
@@ -190,24 +191,36 @@ class ImplementVue:
                     
                     destinity_path = self.__root_destinity_path + self.__project_name  + self.__sufix_project_name + '/src/module/' + login_app
                     shutil.copytree(origin_path,destinity_path)
-                    #rename composable
+                    
                     composable_path = destinity_path + '/composables/'
                     service_path = destinity_path + '/services/'
                     store_path = destinity_path + '/stores/'
                     views_path = destinity_path + '/views/'
+                    route_path = destinity_path + '/'
+                    route_file = 'routes.js'
                     
+                    #rename the composable file to login module name
                     os.rename(composable_path + 'useLogin.js',composable_path + '/use' + login_app +'.js')
+                    #replace the content of composable file with keywords to make the module works
                     self.__replace_content(login_app, composable_path + '/use' + login_app +'.js')
                     
+                    #rename the service file to login module name
                     os.rename(service_path + 'LoginService.js',service_path + login_app +'Service.js')
+                    #replace the content of service file with keywords to make the module works
                     self.__replace_content(login_app, service_path + login_app +'Service.js')
                     
+                    #rename the store file to login module name
                     os.rename(store_path + 'useLoginUserStore.js',store_path + '/use' + login_app +'Store.js')
+                    #replace the content of store file with keywords to make the module works
                     self.__replace_content(login_app, store_path + '/use' + login_app +'Store.js')
                     
+                    #rename the view file to login module name
                     os.rename(views_path + 'LoginUser.vue',views_path + login_app +'.vue')
+                    #replace the content of composable file with keywords to make the module works
                     self.__replace_content(login_app, views_path + login_app +'.vue')
                     
+                    #replace the content of router file with keywords to make the the module works
+                    self.__replace_content(login_app, route_path + route_file)
                     message = 'Module login has been installed'    
                 else:
                     message = 'Module login is not installed'    
@@ -237,7 +250,7 @@ class ImplementVue:
                 file.write(new_text)
             
             response['error']  = False
-            response['message'] = 'Proccess were executed successfully'
+            response['message'] = 'Proccess finished successfully'
         except ValueError as ev:
             response['message'] = ev.__str__()
         except FileExistsError as fe:
@@ -248,7 +261,12 @@ class ImplementVue:
             response['message'] = e.__str__()
         return response
     
-    def __install_vue(self):
+    def __install_vue(self)->dict:
+        """Install Vue and library necesary to work
+
+        Returns:
+            dict: response with error status, data and message
+        """
         
         response = {
             'error' : True,
@@ -257,24 +275,31 @@ class ImplementVue:
         }
         project_vue_name = self.__project_name  + self.__sufix_project_name
         import subprocess
-        process = '';
+        process = ''
         try:
             import os
             destinity_path = self.__root_destinity_path + project_vue_name
-            message = "vue has been installed successfully"
+            message = "Vue 3 has been installed successfully"
             if not os.path.exists(destinity_path):
-                commands_install = "npx create-vite@latest "+destinity_path+" --template vue"
+                commands_install = ["npx","create-vite@latest",destinity_path,"--template","vue"]
                 process = subprocess.run(commands_install,cwd=os.getcwd(),capture_output=True,check=True, text=True,shell=True)
                 print(process.stdout)
-                
+
                 project_path = os.path.join(os.getcwd(), destinity_path)
                 commands_install = ["npm", "install", "axios", "vue-router"]
+                print('Axios and Vue-router are being installed')
                 process = subprocess.run(commands_install,cwd=project_path,capture_output=True, check=True ,text=True,shell=True)
                 print(process.stdout)
                 
                 commands_install = ["npm", "install", "pinia"]
+                print('Pinia are being installed')
                 process = subprocess.run(commands_install,cwd=project_path,capture_output=True, check=True ,text=True, shell=True)
                 print(process.stdout)
+                
+                #install tailwindcss
+                tailwind_iantallation = self.install_tailwindcss()
+                if tailwind_iantallation['error']:
+                    raise ValueError("Tailwindcss have errors: " + tailwind_iantallation['message'])
             else:
                 message = f'Project {project_vue_name} already exists, nothing to do'
             response['error']  = False
@@ -286,4 +311,43 @@ class ImplementVue:
         except Exception as ex:
             response['message'] = ex.__str__()
             
+        return response
+    
+    def install_tailwindcss(self)->dict:
+        """Install twailwindscss in Vue 
+
+        Returns:
+            dict: response with error status, data and message
+        """
+        response = {
+            'error' : True,
+            'message' : '',
+            'data' : []
+        }
+        project_vue_name = self.__project_name  + self.__sufix_project_name
+        import subprocess
+        process = ''
+        try:
+            
+            import os
+            destinity_path = self.__root_destinity_path + project_vue_name
+            message = "tailwindcss has been installed successfully"
+            if os.path.exists(destinity_path):
+                project_path = os.path.join(os.getcwd(), destinity_path)
+                commands_install = ["npm","install","-D","tailwindcss","postcss","autoprefixer"]
+                print("Tailwindcss is being installed")
+                process = subprocess.run(commands_install,cwd=project_path,capture_output=True,check=True, text=True,shell=True)
+                print(process.stdout)
+
+                commands_install = ["npx", "tailwindcss", "init", "-p"]
+                print('The tailwind.config.js and postcss.config.js are being generated')
+                process = subprocess.run(commands_install,cwd=project_path,capture_output=True, check=True ,text=True,shell=True)
+                print(process.stdout)
+                
+            else:
+                message = f'Project {project_vue_name} already exists, nothing to do'
+            response['error']  = False
+            response['message'] = message
+        except ValueError as e:
+            response['message'] = e.__str__()
         return response
