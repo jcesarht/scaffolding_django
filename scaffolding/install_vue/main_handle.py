@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import shutil
+from ..utils.settings_helper import copy_and_paste
 from ..manager_files_backups import ManagerSettingFile
 class ImplementVue:
     
@@ -327,7 +328,9 @@ class ImplementVue:
                 vite_config_file.write(content_vite_config)
                 vite_config_file.close()
                 
-                self.setting_style_css()
+                style_file = self.setting_style_css()
+                if style_file['error']:
+                    print(style_file)
                 
             else:
                 message = f'Project {project_vue_name} already exists, nothing to do'
@@ -533,33 +536,34 @@ export default router
             response['message'] = e.__str__()
         return response
     
-    def setting_style_css(self):
+    def setting_style_css(self)->dict:
+        """copy and paste the css file
+
+        Raises:
+            ValueError: if directory or file exist o anothe error has been ocurred, then is launched
+
+        Returns:
+            dict: error and message is returned
+        """
         response = {
             'error' : True,
-            'message' : '',
-            'data' : []
+            'message' : ''
         }
-        path_css_file = self.__template_path + '/style.css'
-        destinity_path = self.__root_destinity_path + self.__project_name  + self.__sufix_project_name + '/src/style.css'
+        css_file_path = self.__template_path + '/style.css'
+        destination_path = self.__root_destinity_path + self.__project_name  + self.__sufix_project_name + '/src/style.css'
         try:
             print("coping style.css")
-            #get the style.css contnt
-            style_css_file = open(path_css_file,mode='r')
-            content_file = style_css_file.read()
-            style_css_file.close()
+            res = copy_and_paste(css_file_path, destination_path,True)
+            
+            if res['error']:
+                raise ValueError(res['message']) 
             
             print("pasting style.css")
-            #put the style.css content
-            style_css_file = open(destinity_path,mode='w+')
-            style_css_file.write(content_file)           
-            style_css_file.close()
-                        
+            
             response['error']  = False
             response['message'] = 'The style.css has been copied successfully'
-        except FileExistsError as fe:
-            response['message'] = 'The destinity file already exists '+ fe.strerror
-        except FileNotFoundError as fnf:
-            response['message'] = 'Error in path '+ fnf.strerror
+        except ValueError as ve:
+            response['message'] = ve
         except Exception as e:
             response['message'] = e
         return response

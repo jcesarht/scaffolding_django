@@ -107,4 +107,47 @@ def register_app_in_line(setting_line_param:str, project_name_param:str):
         response['message'] = e
     return response
 
-def copy_and_paste():
+def copy_and_paste(source_file_path:str,destination_file_path:str,overwrite=False)->dict:
+    """ Copy and paste a directory or file without overwriting it
+
+    Args:
+        source_file_path (str): Origin path of file or directory
+        destination_file_path (str): Destination path of file or directory
+
+    Raises:
+        ValueError: Is launch if the source file or folder already exist
+
+    Returns:
+        dict: error and message is returned
+    """
+    import shutil
+    import os
+    response = {
+        'error' : True,
+        'message' : '',
+    }
+    try:
+        type_resourse = 'file'
+        
+        if os.path.exists(destination_file_path) and not overwrite:
+            if os.path.isdir(destination_file_path):
+                type_resourse = 'directory'
+            raise ValueError(f"The {type_resourse} already exist. Cannot be copied")
+        
+        if type_resourse == 'file':
+            shutil.copyfile(source_file_path,destination_file_path)
+        else:
+            shutil.copytree(source_file_path,destination_file_path) 
+        
+        response['error']  = False
+        response['message'] = f'{source_file_path} has been copied successfully'
+    except FileExistsError as fe:
+            response['message'] = f'The destination {type_resourse} already exists '+ fe.strerror
+    except FileNotFoundError as fnf:
+            response['message'] = 'Error in path '+ fnf.strerror
+    except ValueError as ve:
+        response['message'] = ve.__str__()
+    except Exception as e:
+        response['message'] = e.__str__()
+    
+    return response
