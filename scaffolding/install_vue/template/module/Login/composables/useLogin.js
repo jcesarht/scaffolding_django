@@ -1,4 +1,4 @@
-import { loginService } from "../services/%module_name%Service"; 
+import {%module_name%Service } from "../services/%module_name%Service"; 
 
 export async function use%module_name%(usernameParam, passwordParam){
     const username = usernameParam
@@ -13,7 +13,7 @@ export async function use%module_name%(usernameParam, passwordParam){
                 throw Error("Please check the param username")
             }
             loading = true;
-            const res = await loginService.getAuth(username, password)
+            const res = await %module_name%Service.getAuth(username, password)
             response = {
                 data: res.data.data.data,
                 error: res.error,
@@ -46,7 +46,7 @@ export async function useSignin(userDataParam){
                 throw Error("Please check the param username")
             }
             loading = true;
-            const res = await loginService.signin(userData)
+            const res = await %module_name%Service.signin(userData)
             response = {
                 data: res.data.data.data,
                 error: res.error,

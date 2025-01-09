@@ -1,4 +1,4 @@
-import LoginUser from '@/module/%module_name%/views/%module_name%.vue'
+import %module_name% from '@/module/%module_name%/views/%module_name%.vue'
 import PasswordRecovery from '@/module/%module_name%/views/PasswordRecovery.vue'
 import SigninUser from '@/module/%module_name%/views/SigninUser.vue'
 

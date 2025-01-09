@@ -216,12 +216,20 @@ class ImplementVue:
                     
                     #rename the view file to login module name
                     os.rename(views_path + 'LoginUser.vue',views_path + login_app +'.vue')
-                    #replace the content of composable file with keywords to make the module works
+                    #replace the content of view file with keywords to make the module works
                     self.__replace_content(login_app, views_path + login_app +'.vue')
+                    #replace the content of router file with keywords to make the the module works
+                    self.__replace_content(login_app, views_path + 'SigninUser.vue')
+                    self.__replace_content(login_app, views_path + 'PasswordRecovery.vue')
                     
                     #replace the content of router file with keywords to make the the module works
                     self.__replace_content(login_app, route_path + route_file)
-                    message = 'Module login has been installed'    
+                    
+                    self.setting_app_file(login_app)
+                    self.setting_main_file()    
+                    self.setting_routes_file(login_app)    
+                    
+                    message = 'Module login has been installed'
                 else:
                     message = 'Module login is not installed'    
             response['error']  = False
@@ -279,6 +287,7 @@ class ImplementVue:
         try:
             import os
             destinity_path = self.__root_destinity_path + project_vue_name
+            
             message = "Vue 3 has been installed successfully"
             if not os.path.exists(destinity_path):
                 commands_install = ["npx","create-vite@latest",destinity_path,"--template","vue"]
@@ -295,11 +304,31 @@ class ImplementVue:
                 print('Pinia are being installed')
                 process = subprocess.run(commands_install,cwd=project_path,capture_output=True, check=True ,text=True, shell=True)
                 print(process.stdout)
-                
+                         
                 #install tailwindcss
                 tailwind_iantallation = self.install_tailwindcss()
                 if tailwind_iantallation['error']:
                     raise ValueError("Tailwindcss have errors: " + tailwind_iantallation['message'])
+                
+                config_vite = project_path + '/vite.config.js'
+                vite_config_file = open(config_vite,'r')
+                content_vite_config = vite_config_file.read()
+                content_vite_config = content_vite_config.replace(
+                    "import vue from '@vitejs/plugin-vue'",
+                    "import vue from '@vitejs/plugin-vue'\nimport path from 'path'"
+                )
+                content_vite_config = content_vite_config.replace(
+                    'plugins: [vue()],',
+                    'plugins: [vue()],\n   resolve:{\n       alias:{\n           "@": path.resolve(__dirname,"./src")\n        }\n   }'
+                )
+                vite_config_file.close()
+                
+                vite_config_file = open(config_vite,'w+')
+                vite_config_file.write(content_vite_config)
+                vite_config_file.close()
+                
+                self.setting_style_css()
+                
             else:
                 message = f'Project {project_vue_name} already exists, nothing to do'
             response['error']  = False
@@ -328,9 +357,12 @@ class ImplementVue:
         import subprocess
         process = ''
         try:
-            
+            from time import sleep
             import os
+            
             destinity_path = self.__root_destinity_path + project_vue_name
+            tailwindcss_path = destinity_path + '/tailwind.config.js'
+            
             message = "tailwindcss has been installed successfully"
             if os.path.exists(destinity_path):
                 project_path = os.path.join(os.getcwd(), destinity_path)
@@ -344,10 +376,190 @@ class ImplementVue:
                 process = subprocess.run(commands_install,cwd=project_path,capture_output=True, check=True ,text=True,shell=True)
                 print(process.stdout)
                 
+                tailwindcss_config = open(tailwindcss_path,mode='r+')
+                content_tailwindcss = tailwindcss_config.read() #"".join( )
+                tailwindcss_config.close()
+                content_tailwindcss = content_tailwindcss.replace(
+                    "content: [],",
+                    "content: [\n    \"./index.html\",\n    \"./src/**/*.{vue,js,ts,jsx,tsx}\"\n  ],"
+                )
+                sleep(5)
+                
+                tailwindcss_config = open(tailwindcss_path,mode='w+')
+                tailwindcss_config.write(content_tailwindcss)
+                tailwindcss_config.close()
+                
+                index_css_file = open(destinity_path + './src/index.css',mode='w' )
+                index_css_file.write(
+                    "@tailwind base;\n@tailwind components;\n@tailwind utilities;"
+                )
             else:
                 message = f'Project {project_vue_name} already exists, nothing to do'
             response['error']  = False
             response['message'] = message
         except ValueError as e:
             response['message'] = e.__str__()
+        return response
+    
+    def setting_app_file(self,main_module_name):
+        response = {
+            'error' : True,
+            'message' : '',
+            'data' : []
+        }
+        try:
+            project_vue_name = self.__project_name  + self.__sufix_project_name
+            destinity_path = self.__root_destinity_path + project_vue_name + "/src/App.vue"
+            
+            content_app_file = """
+<script setup>
+  import """+main_module_name+""" from '@/module/"""+main_module_name+"""/views/"""+main_module_name+""".vue'
+  import { useOverlay } from '@/stores/useOverlay';
+  const overlay = useOverlay()
+</script>
+
+<template>
+  <div class="relative h-dvh w-dvw">
+    <router-view></router-view>
+    <div class="
+      fixed inset-0
+      bg-black
+      bg-opacity-70
+      z-50
+      flex items-center justify-center
+      "
+      v-show="overlay.watchShowOverlay"
+    >
+      <div class="spinner "></div>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+</style>
+            """
+            app_file = open(destinity_path,mode="w+")
+            app_file.write(content_app_file)
+            app_file.close()
+            
+            response['error']  = False
+            response['message'] = 'Proccess were executed successfully'
+        except ValueError as e:
+            response['message'] = e.__str__()
+        return response
+    
+    def setting_main_file(self):
+        response = {
+            'error' : True,
+            'message' : '',
+            'data' : []
+        }
+        try:
+            project_vue_name = self.__project_name  + self.__sufix_project_name
+            destinity_path = self.__root_destinity_path + project_vue_name + "/src/main.js"
+            
+            content_main_file = """
+import { createApp } from 'vue'
+import './style.css'
+import { createPinia } from 'pinia';
+import App from './App.vue'
+import './index.css'
+import router from './router'
+
+const pinia = createPinia();
+createApp(App).use(pinia).use(router).mount('#app')
+            """
+            main_file = open(destinity_path,mode="w+")
+            main_file.write(content_main_file)
+            main_file.close()
+            response['error']  = False
+            response['message'] = 'Proccess were executed successfully'
+        except ValueError as e:
+            response['message'] = e.__str__()
+        return response
+    
+    def setting_routes_file(self,module_name):
+        response = {
+            'error' : True,
+            'message' : '',
+            'data' : []
+        }
+        try:
+            project_vue_name = self.__project_name  + self.__sufix_project_name
+            destinity_path = self.__root_destinity_path + project_vue_name + "/src/router.js"
+            
+            content_main_file = """
+import {createRouter, createWebHistory } from 'vue-router'
+import routes%module_name% from '@/module/%module_name%/routes'
+import PageNotFound from '@/views/PageNotFound.vue'
+import {use%module_name%Store} from '@/module/%module_name%/stores/use%module_name%Store'
+
+const routes = [
+    ...routes%module_name%,
+    {
+        path: '/:catchAll(.*)',
+        component: PageNotFound, 
+        name: 'page_not_found'
+    },
+]
+
+const router = createRouter({
+    history: createWebHistory(),
+    routes
+})
+
+router.beforeEach( (to, from, next) => {
+    const store = use%module_name%Store()
+    const {loadUser} = store
+    loadUser()
+    const {isAuthenticated} = store
+    const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
+    if( requiresAuth && !isAuthenticated){
+        next('/page_not_found')
+    }else{
+        next()
+    }
+})
+
+export default router
+            """
+            content_main_file = content_main_file.replace('%module_name%',module_name)
+            main_file = open(destinity_path,mode="w+")
+            main_file.write(content_main_file)
+            main_file.close()
+            response['error']  = False
+            response['message'] = 'Proccess were executed successfully'
+        except ValueError as e:
+            response['message'] = e.__str__()
+        return response
+    
+    def setting_style_css(self):
+        response = {
+            'error' : True,
+            'message' : '',
+            'data' : []
+        }
+        path_css_file = self.__template_path + '/style.css'
+        destinity_path = self.__root_destinity_path + self.__project_name  + self.__sufix_project_name + '/src/style.css'
+        try:
+            print("coping style.css")
+            #get the style.css contnt
+            style_css_file = open(path_css_file,mode='r')
+            content_file = style_css_file.read()
+            style_css_file.close()
+            
+            print("pasting style.css")
+            #put the style.css content
+            style_css_file = open(destinity_path,mode='w+')
+            style_css_file.write(content_file)           
+            style_css_file.close()
+                        
+            response['error']  = False
+            response['message'] = 'The style.css has been copied successfully'
+        except FileExistsError as fe:
+            response['message'] = 'The destinity file already exists '+ fe.strerror
+        except FileNotFoundError as fnf:
+            response['message'] = 'Error in path '+ fnf.strerror
+        except Exception as e:
+            response['message'] = e
         return response

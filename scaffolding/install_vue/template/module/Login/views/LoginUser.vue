@@ -48,7 +48,7 @@
     import UIInputPassword from '@/components/UIComponents/UIInputPassword.vue';
     import UIButton from '@/components/UIComponents/UIButton.vue';
     import baseInfoSign from '@/components/base/baseInfoSign.vue';
-    import { useLogin } from '../composables/use%module_name%';
+    import { use%module_name% } from '../composables/use%module_name%';
     import { use%module_name%Store } from '../stores/use%module_name%Store';
     import { useOverlay } from '@/stores/useOverlay';
 
@@ -78,7 +78,7 @@
                 && !inputPassword.value.checkValidateError()
             ){
                 showOverlay()
-                loginRequest = await useLogin(inputUser.value.valueInput(),inputPassword.value.valueInput())
+                loginRequest = await use%module_name%(inputUser.value.valueInput(),inputPassword.value.valueInput())
                 if (!loginRequest.error){
                     const dataUser = loginRequest.response.data
                     loginAction(dataUser) //save in the store

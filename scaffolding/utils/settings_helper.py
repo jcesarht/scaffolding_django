@@ -106,3 +106,5 @@ def register_app_in_line(setting_line_param:str, project_name_param:str):
     except ValueError as e:
         response['message'] = e
     return response
+
+def copy_and_paste():
