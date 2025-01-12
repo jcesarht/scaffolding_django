@@ -8,7 +8,7 @@ class ImplementVue:
         self.__template_path:str = "./scaffolding/install_vue/template/"
         self.__project_name:str = ""
         self.__sufix_project_name:str = "_vue"
-        self.__root_destinity_path:str = "../"
+        self.__root_destination_path:str = "../"
         self.__manager_setting_file = ManagerSettingFile()
     
     @property
@@ -48,9 +48,20 @@ class ImplementVue:
             if(install_views_response['error']):
                 raise ValueError("Error during views installation: " + install_views_response['message'])
             
+            dashboard_module_response = self.__install_dashboard_module()
+            if(dashboard_module_response['error']):
+                raise ValueError("Error during Dashboard module installation: " + dashboard_module_response['message'])
+            
             login_module_response = self.__install_login_module()
             if(login_module_response['error']):
                 raise ValueError("Error during login module installation: " + login_module_response['message'])
+            main_module_name = 'dashboard'
+            if login_module_response['data']:
+                main_module_name = login_module_response['data']['module_name']
+                
+            self.setting_app_file(main_module_name)
+            self.setting_routes_file(main_module_name)
+            self.setting_main_file()    
             
             response['error']  = False
             response['message'] = 'Components has been installed successfully'
@@ -66,11 +77,11 @@ class ImplementVue:
             'data' : []
         }
         path_components = self.__template_path + '/components/'
-        destinity_path = self.__root_destinity_path + self.__project_name  + self.__sufix_project_name + '/src/components'
+        destination_path = self.__root_destination_path + self.__project_name  + self.__sufix_project_name + '/src/components'
         try:
             
-            shutil.rmtree(destinity_path)
-            shutil.copytree(path_components,destinity_path)
+            shutil.rmtree(destination_path)
+            shutil.copytree(path_components,destination_path)
             
             response['error']  = False
             response['message'] = 'Proccess were executed successfully'
@@ -90,9 +101,9 @@ class ImplementVue:
             'data' : []
         }
         path_service = self.__template_path + '/services/'
-        destinity_path = self.__root_destinity_path + self.__project_name  + self.__sufix_project_name + '/src/services'
+        destination_path = self.__root_destination_path + self.__project_name  + self.__sufix_project_name + '/src/services'
         try:
-            shutil.copytree(path_service,destinity_path)
+            shutil.copytree(path_service,destination_path)
             
             response['error']  = False
             response['message'] = 'Proccess services were executed successfully'
@@ -112,9 +123,9 @@ class ImplementVue:
             'data' : []
         }
         path_service = self.__template_path + '/stores/'
-        destinity_path = self.__root_destinity_path + self.__project_name  + self.__sufix_project_name + '/src/stores'
+        destination_path = self.__root_destination_path + self.__project_name  + self.__sufix_project_name + '/src/stores'
         try:
-            shutil.copytree(path_service,destinity_path)
+            shutil.copytree(path_service,destination_path)
             
             response['error']  = False
             response['message'] = 'Proccess stores were executed successfully'
@@ -134,9 +145,9 @@ class ImplementVue:
             'data' : []
         }
         path_service = self.__template_path + '/views/'
-        destinity_path = self.__root_destinity_path + self.__project_name  + self.__sufix_project_name + '/src/views'
+        destination_path = self.__root_destination_path + self.__project_name  + self.__sufix_project_name + '/src/views'
         try:
-            shutil.copytree(path_service,destinity_path)
+            shutil.copytree(path_service,destination_path)
             
             response['error']  = False
             response['message'] = 'Proccess views were executed successfully'
@@ -156,9 +167,9 @@ class ImplementVue:
             'data' : []
         }
         path_service = self.__template_path + '/views/'
-        destinity_path = self.__root_destinity_path + self.__project_name  + self.__sufix_project_name + '/src/views'
+        destination_path = self.__root_destination_path + self.__project_name  + self.__sufix_project_name + '/src/views'
         try:
-            #shutil.copytree(path_service,destinity_path)
+            #shutil.copytree(path_service,destination_path)
             
             response['error']  = False
             response['message'] = 'Proccess views were executed successfully'
@@ -175,11 +186,12 @@ class ImplementVue:
         response = {
             'error' : True,
             'message' : '',
-            'data' : []
+            'data' : {}
         }
         
         origin_path = self.__template_path + '/module/Login'
         message:str = ''
+        setting_module:dict = {}
         try:
             config_file = self.__manager_setting_file.get_scaffolding_config_file()
             if(config_file['status']):
@@ -190,14 +202,14 @@ class ImplementVue:
                     if(login_app == ''):
                         raise ValueError("Login module have not name, check the config file.")
                     
-                    destinity_path = self.__root_destinity_path + self.__project_name  + self.__sufix_project_name + '/src/module/' + login_app
-                    shutil.copytree(origin_path,destinity_path)
+                    destination_path = self.__root_destination_path + self.__project_name  + self.__sufix_project_name + '/src/module/' + login_app
+                    shutil.copytree(origin_path,destination_path)
                     
-                    composable_path = destinity_path + '/composables/'
-                    service_path = destinity_path + '/services/'
-                    store_path = destinity_path + '/stores/'
-                    views_path = destinity_path + '/views/'
-                    route_path = destinity_path + '/'
+                    composable_path = destination_path + '/composables/'
+                    service_path = destination_path + '/services/'
+                    store_path = destination_path + '/stores/'
+                    views_path = destination_path + '/views/'
+                    route_path = destination_path + '/'
                     route_file = 'routes.js'
                     
                     #rename the composable file to login module name
@@ -226,19 +238,41 @@ class ImplementVue:
                     #replace the content of router file with keywords to make the the module works
                     self.__replace_content(login_app, route_path + route_file)
                     
-                    self.setting_app_file(login_app)
-                    self.setting_main_file()    
-                    self.setting_routes_file(login_app)    
+                    setting_module['module_name'] = login_app
+                    response['data'] = setting_module
                     
-                    message = 'Module login has been installed'
+                    message = 'Login module has been installed'
                 else:
-                    message = 'Module login is not installed'    
+                    message = 'Login module is not installed'    
             response['error']  = False
             response['message'] = message
         except ValueError as ve:
-            response['message'] = ve
+            response['message'] = str(ve)
         except Exception as ex:
-            response['message'] = ex
+            response['message'] = str(ex) +  ' type excetion' + type(ex).__name__
+        return response
+    
+    def __install_dashboard_module(self)->dict:
+        response = {
+            'error' : True,
+            'message' : '',
+            'data' : []
+        }
+        origin_path = self.__template_path + '/module/Dashboard'
+        try:
+                import os
+                destination_path = self.__root_destination_path + self.__project_name  + self.__sufix_project_name + '/src/module/Dashboard'
+                shutil.copytree(origin_path,destination_path)
+                    
+                composable_path = destination_path + '/composables/'
+                views_path = destination_path + '/views/'
+                route_path = destination_path + '/'
+                route_file = 'routes.js'
+                                                    
+                response['error']  = False
+                response['message'] = 'Dashboard module has been installed successfully'
+        except ValueError as ve:
+            response['message'] = str(ve)
         return response
     
     def __replace_content(self,word_to_sustitution:str,file_path_param:str):
@@ -287,15 +321,15 @@ class ImplementVue:
         process = ''
         try:
             import os
-            destinity_path = self.__root_destinity_path + project_vue_name
+            destination_path = self.__root_destination_path + project_vue_name
             
             message = "Vue 3 has been installed successfully"
-            if not os.path.exists(destinity_path):
-                commands_install = ["npx","create-vite@latest",destinity_path,"--template","vue"]
+            if not os.path.exists(destination_path):
+                commands_install = ["npx","create-vite@latest",destination_path,"--template","vue"]
                 process = subprocess.run(commands_install,cwd=os.getcwd(),capture_output=True,check=True, text=True,shell=True)
                 print(process.stdout)
 
-                project_path = os.path.join(os.getcwd(), destinity_path)
+                project_path = os.path.join(os.getcwd(), destination_path)
                 commands_install = ["npm", "install", "axios", "vue-router"]
                 print('Axios and Vue-router are being installed')
                 process = subprocess.run(commands_install,cwd=project_path,capture_output=True, check=True ,text=True,shell=True)
@@ -363,12 +397,12 @@ class ImplementVue:
             from time import sleep
             import os
             
-            destinity_path = self.__root_destinity_path + project_vue_name
-            tailwindcss_path = destinity_path + '/tailwind.config.js'
+            destination_path = self.__root_destination_path + project_vue_name
+            tailwindcss_path = destination_path + '/tailwind.config.js'
             
             message = "tailwindcss has been installed successfully"
-            if os.path.exists(destinity_path):
-                project_path = os.path.join(os.getcwd(), destinity_path)
+            if os.path.exists(destination_path):
+                project_path = os.path.join(os.getcwd(), destination_path)
                 commands_install = ["npm","install","-D","tailwindcss","postcss","autoprefixer"]
                 print("Tailwindcss is being installed")
                 process = subprocess.run(commands_install,cwd=project_path,capture_output=True,check=True, text=True,shell=True)
@@ -392,7 +426,7 @@ class ImplementVue:
                 tailwindcss_config.write(content_tailwindcss)
                 tailwindcss_config.close()
                 
-                index_css_file = open(destinity_path + './src/index.css',mode='w' )
+                index_css_file = open(destination_path + './src/index.css',mode='w' )
                 index_css_file.write(
                     "@tailwind base;\n@tailwind components;\n@tailwind utilities;"
                 )
@@ -412,7 +446,7 @@ class ImplementVue:
         }
         try:
             project_vue_name = self.__project_name  + self.__sufix_project_name
-            destinity_path = self.__root_destinity_path + project_vue_name + "/src/App.vue"
+            destination_path = self.__root_destination_path + project_vue_name + "/src/App.vue"
             
             content_app_file = """
 <script setup>
@@ -441,7 +475,7 @@ class ImplementVue:
 <style scoped>
 </style>
             """
-            app_file = open(destinity_path,mode="w+")
+            app_file = open(destination_path,mode="w+")
             app_file.write(content_app_file)
             app_file.close()
             
@@ -459,7 +493,7 @@ class ImplementVue:
         }
         try:
             project_vue_name = self.__project_name  + self.__sufix_project_name
-            destinity_path = self.__root_destinity_path + project_vue_name + "/src/main.js"
+            destination_path = self.__root_destination_path + project_vue_name + "/src/main.js"
             
             content_main_file = """
 import { createApp } from 'vue'
@@ -472,7 +506,7 @@ import router from './router'
 const pinia = createPinia();
 createApp(App).use(pinia).use(router).mount('#app')
             """
-            main_file = open(destinity_path,mode="w+")
+            main_file = open(destination_path,mode="w+")
             main_file.write(content_main_file)
             main_file.close()
             response['error']  = False
@@ -488,14 +522,37 @@ createApp(App).use(pinia).use(router).mount('#app')
             'data' : []
         }
         try:
-            project_vue_name = self.__project_name  + self.__sufix_project_name
-            destinity_path = self.__root_destinity_path + project_vue_name + "/src/router.js"
+            import re
             
-            content_main_file = """
-import {createRouter, createWebHistory } from 'vue-router'
-import routes%module_name% from '@/module/%module_name%/routes'
-import PageNotFound from '@/views/PageNotFound.vue'
-import {use%module_name%Store} from '@/module/%module_name%/stores/use%module_name%Store'
+            project_vue_name = self.__project_name  + self.__sufix_project_name
+            router_path = self.__template_path + '/router.js'
+            destination_path = self.__root_destination_path + project_vue_name + "/src/router.js"
+            #coping router path and paste in the project
+            print("coping router.js")
+            res = copy_and_paste(router_path, destination_path,True)
+            if res['error']:
+                raise ValueError(res['message']) 
+            
+            print("pasting router.js")
+            
+            file_router = open(destination_path,'r')
+            content_router_file = file_router.read();
+            file_router.close()
+            print("##############\n",content_router_file,"\n#########################")
+            regular_expression_search = r"^import\s+.*"
+            #get libraries list as list way
+            libraries_imported = re.findall(regular_expression_search,content_router_file,re.MULTILINE)
+            libraries_imported.append(f"import routes{module_name} from '@/module/{module_name}/routes'")
+            regular_expression_search = r"const routes = \[.*\]"
+            #get router objects list as list way
+            routes_implemented = re.search(regular_expression_search,content_router_file,re.DOTALL).group()
+            regular_expression_search = r"\[.*\n?\]$"
+            routes_implemented = re.search(regular_expression_search,routes_implemented,re.DOTALL).group()
+            regular_expression_search = r"\{.*\},"
+            routes_implemented = re.sub(regular_expression_search,'',routes_implemented,flags=re.DOTALL)
+            routes_implemented.replace('...','"...')
+            routes_implemented.replace(',','",')
+            content_main_file = "".join(libraries_imported) + """
 
 const routes = [
     ...routes%module_name%,
@@ -527,7 +584,7 @@ router.beforeEach( (to, from, next) => {
 export default router
             """
             content_main_file = content_main_file.replace('%module_name%',module_name)
-            main_file = open(destinity_path,mode="w+")
+            main_file = open(destination_path,mode="w+")
             main_file.write(content_main_file)
             main_file.close()
             response['error']  = False
@@ -550,11 +607,10 @@ export default router
             'message' : ''
         }
         css_file_path = self.__template_path + '/style.css'
-        destination_path = self.__root_destinity_path + self.__project_name  + self.__sufix_project_name + '/src/style.css'
+        destination_path = self.__root_destination_path + self.__project_name  + self.__sufix_project_name + '/src/style.css'
         try:
             print("coping style.css")
             res = copy_and_paste(css_file_path, destination_path,True)
-            
             if res['error']:
                 raise ValueError(res['message']) 
             

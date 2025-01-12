@@ -24,7 +24,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         iv = ImplementVue()
         try:
-            self.stdout.write(self.style.HTTP_INFO('scaffold is initializing...'))
+            self.stdout.write(self.style.HTTP_INFO('VUE 3 + Vite are being installed...'))
             output_message = ''
             projectname = options['projectname'][0].strip()
             if(projectname == ''):
