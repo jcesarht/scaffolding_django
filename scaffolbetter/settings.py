@@ -41,7 +41,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders',
-    'USllogin',
+    'loginUser',
     'empleados_app'
 ]
 

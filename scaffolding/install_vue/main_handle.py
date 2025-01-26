@@ -60,7 +60,11 @@ class ImplementVue:
                 main_module_name = login_module_response['data']['module_name']
                 
             self.setting_app_file(main_module_name)
-            self.setting_routes_file(main_module_name)
+            #setting routes files
+            routes_process = self.setting_routes_file(main_module_name,store=True)
+            if (routes_process['error']):
+                print("Something was wrong in routes file"+routes_process["message"])
+            
             self.setting_main_file()    
             
             response['error']  = False
@@ -295,13 +299,13 @@ class ImplementVue:
             response['error']  = False
             response['message'] = 'Proccess finished successfully'
         except ValueError as ev:
-            response['message'] = ev.__str__()
+            response['message'] = str(ev)
         except FileExistsError as fe:
             response['message'] = 'The destinity folder already exists '+ fe.strerror
         except FileNotFoundError as fnf:
             response['message'] = 'Error in path '+ fnf.strerror
         except Exception as e:
-            response['message'] = e.__str__()
+            response['message'] = str(e)
         return response
     
     def __install_vue(self)->dict:
@@ -318,10 +322,11 @@ class ImplementVue:
         }
         project_vue_name = self.__project_name  + self.__sufix_project_name
         import subprocess
+        import os
+        
         process = ''
+        destination_path = self.__root_destination_path + project_vue_name
         try:
-            import os
-            destination_path = self.__root_destination_path + project_vue_name
             
             message = "Vue 3 has been installed successfully"
             if not os.path.exists(destination_path):
@@ -373,9 +378,11 @@ class ImplementVue:
         except subprocess.CalledProcessError as cpe:
             response['message'] = cpe.stderr
         except ValueError as ve:
-            response['message'] = ve.__str__()
+            response['message'] = str(ve)
         except Exception as ex:
-            response['message'] = ex.__str__()
+            response['message'] = str(ex)
+        finally:
+            os.close(0)
             
         return response
     
@@ -430,12 +437,20 @@ class ImplementVue:
                 index_css_file.write(
                     "@tailwind base;\n@tailwind components;\n@tailwind utilities;"
                 )
+                
+                #installing icons
+                print("installing heroicons")
+                commands_install = ["npm", "install", "@headlessui/vue", "@heroicons/vue"]
+                process = subprocess.run(commands_install,cwd=project_path,capture_output=True, check=True ,text=True,shell=True)
+                print(process.stdout)
+                print("heroicons has been installed")
+                
             else:
                 message = f'Project {project_vue_name} already exists, nothing to do'
             response['error']  = False
             response['message'] = message
-        except ValueError as e:
-            response['message'] = e.__str__()
+        except ValueError as ve:
+            response['message'] = str(ve)
         return response
     
     def setting_app_file(self,main_module_name):
@@ -481,8 +496,8 @@ class ImplementVue:
             
             response['error']  = False
             response['message'] = 'Proccess were executed successfully'
-        except ValueError as e:
-            response['message'] = e.__str__()
+        except ValueError as ve:
+            response['message'] = str(ve)
         return response
     
     def setting_main_file(self):
@@ -512,17 +527,18 @@ createApp(App).use(pinia).use(router).mount('#app')
             response['error']  = False
             response['message'] = 'Proccess were executed successfully'
         except ValueError as e:
-            response['message'] = e.__str__()
+            response['message'] = str(e)
         return response
     
-    def setting_routes_file(self,module_name):
+    def setting_routes_file(self,module_name,store=False):
         response = {
             'error' : True,
             'message' : '',
             'data' : []
         }
+        import re
+        import json
         try:
-            import re
             
             project_vue_name = self.__project_name  + self.__sufix_project_name
             router_path = self.__template_path + '/router.js'
@@ -538,36 +554,41 @@ createApp(App).use(pinia).use(router).mount('#app')
             file_router = open(destination_path,'r')
             content_router_file = file_router.read();
             file_router.close()
-            print("##############\n",content_router_file,"\n#########################")
             regular_expression_search = r"^import\s+.*"
             #get libraries list as list way
             libraries_imported = re.findall(regular_expression_search,content_router_file,re.MULTILINE)
             libraries_imported.append(f"import routes{module_name} from '@/module/{module_name}/routes'")
+            if store:
+                libraries_imported.append("import {use"+module_name +"Store} from '@/module/"+module_name+"/stores/use"+module_name+"Store'")
             regular_expression_search = r"const routes = \[.*\]"
-            #get router objects list as list way
+            #get router array objects and transform as python list way
             routes_implemented = re.search(regular_expression_search,content_router_file,re.DOTALL).group()
             regular_expression_search = r"\[.*\n?\]$"
             routes_implemented = re.search(regular_expression_search,routes_implemented,re.DOTALL).group()
-            regular_expression_search = r"\{.*\},"
+            #find the object route and replace with empty character
+            regular_expression_search = r"\s*\{.*?\}\s*"
             routes_implemented = re.sub(regular_expression_search,'',routes_implemented,flags=re.DOTALL)
-            routes_implemented.replace('...','"...')
-            routes_implemented.replace(',','",')
-            content_main_file = "".join(libraries_imported) + """
-
-const routes = [
-    ...routes%module_name%,
-    {
-        path: '/:catchAll(.*)',
-        component: PageNotFound, 
-        name: 'page_not_found'
-    },
-]
-
+            
+            routes_implemented = routes_implemented.replace('...','"...')
+            routes_implemented = routes_implemented.replace(',','",')
+            #remove the last comma "," before the "]"
+            regular_expression_search = r",\s*]$"
+            routes_implemented = re.sub(regular_expression_search,']',routes_implemented,flags=re.DOTALL)
+            
+            #parsed as list for python
+            routes_list =json.loads(routes_implemented)
+            routes_list.append(f"...routes{module_name}")
+            routes_list.append({'path': "\'/:catchAll(.*)\'",'component': "PageNotFound",'name': "'page_not_found'"} )
+            routes_implemented = json.dumps(routes_list)
+            content_main_file = "\n".join(libraries_imported) + "\nconst routes = " + routes_implemented.replace('",','",\n').replace('"','').replace('[','[\n ')
+            content_main_file = content_main_file + """
 const router = createRouter({
     history: createWebHistory(),
     routes
 })
-
+"""
+            if store:
+                content_main_file = content_main_file + """
 router.beforeEach( (to, from, next) => {
     const store = use%module_name%Store()
     const {loadUser} = store
@@ -580,17 +601,21 @@ router.beforeEach( (to, from, next) => {
         next()
     }
 })
-
-export default router
-            """
+"""
+            content_main_file = content_main_file + """export default router"""
             content_main_file = content_main_file.replace('%module_name%',module_name)
             main_file = open(destination_path,mode="w+")
             main_file.write(content_main_file)
             main_file.close()
             response['error']  = False
             response['message'] = 'Proccess were executed successfully'
-        except ValueError as e:
-            response['message'] = e.__str__()
+        except ValueError as ve:
+            response['message'] = str(ve)
+        except json.JSONDecodeError as jse:
+            response['message'] = str(jse)
+        except Exception as ex:
+            response['message'] = str(ex)
+            
         return response
     
     def setting_style_css(self)->dict:

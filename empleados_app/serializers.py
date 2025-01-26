@@ -6,4 +6,4 @@ class EmpleadosSerializer(serializers.ModelSerializer):
    class Meta:
       model = Empleados
       fields = ('emp_id', 'fecha_ingreso', 'nombre', 'salario')
-      
+      read_only_fields = ('emp_id',) 

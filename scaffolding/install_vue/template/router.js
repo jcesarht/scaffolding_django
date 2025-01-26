@@ -1,12 +1,14 @@
 import {createRouter, createWebHistory } from 'vue-router'
 import PageNotFound from '@/views/PageNotFound.vue'
+import routesDashboard from '@/module/Dashboard/routes'
 
 const routes = [
+    ...routesDashboard,
     {
         path: '/:catchAll(.*)',
         component: PageNotFound, 
         name: 'page_not_found'
-    },
+    }
 ]
 
 const router = createRouter({
