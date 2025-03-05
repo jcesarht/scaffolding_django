@@ -1,3 +1,7 @@
+import json
+import re
+from pathlib import Path
+
 def register_app(setting_list:str,app_name:str, project_name_param:str):
     
     response = {
@@ -14,8 +18,6 @@ def register_app(setting_list:str,app_name:str, project_name_param:str):
             }
             try:
                 
-                import re
-                import json
                 setting_file_path = f'./{project_name_param}/settings.py'
                 setting_file = open(setting_file_path,mode = 'r')
                 content_settings_file = "".join(setting_file.readlines())
@@ -46,7 +48,7 @@ def register_app(setting_list:str,app_name:str, project_name_param:str):
             }
             try:
                 register_app = libraries_app_param
-                import re
+        
                 setting_file_path = f'./{project_name_param}/settings.py'
                 setting_file = open(setting_file_path,'r')
                 content_settings_file = "".join(setting_file.readlines())
@@ -92,7 +94,7 @@ def register_app_in_line(setting_line_param:str, project_name_param:str):
         'data' : []
     }
     try:
-        import re
+
         setting_file_path = f'./{project_name_param}/settings.py'
         setting_file = open(setting_file_path,'r+')
         content_settings_file = "".join(setting_file.readlines())
@@ -151,3 +153,81 @@ def copy_and_paste(source_file_path:str,destination_file_path:str,overwrite=Fals
         response['message'] = e.__str__()
     
     return response
+
+def modify_js_object_attribute(content_param:str, path_keys: list,new_value_param:str):
+    """Modifies the value of an attribute in a JS file within a nested object.
+
+    Args:
+        path_keys (list): List of keys forming the path to the attribute.
+        content_param (str): JS object casted in string
+        new_value_param (_type_): _New value for the attribute (can be an object or array).
+
+    Returns:
+        dict: response of process
+    """
+    
+    response = {
+        'error' : True,
+        'message' : '',
+        'data' : []
+    }
+    
+    try:
+        #Convertir el string a un diccionario
+        js_object = json.loads(js_object_str.replace("'", '"'))  # Convertir comillas simples en dobles para JSON
+        #Navegar por la jerarquía de atributos
+        current_level = js_object
+        for attribute in attribute_list[:-1]:
+            #Si el atributo no existe, lo creamos como un diccionario
+            if attribute not in current_level:
+                current_level[attribute] = {}
+            current_level = current_level[attribute]
+            #Asignar el valor al último atributo de la lista
+        current_level[attribute_list[-1]] = value
+        #Convertir de nuevo el diccionario a un string de objeto JavaScript
+        return json.dumps(js_object, indent=4).replace('"', "'")
+        
+        response['data'] = modified_js_object_str
+        response['error'] = True
+        response['message'] = f"The JS object has been successfully modified."
+    except ValueError as ve:
+        response['message'] = str(ve)
+    return response
+
+def add_import_line_in_js(file_content:str,import_line:str,mode='FULL_CONTENT')->dict:
+    """
+    Add an import line to a JavaScript file.
+
+    Args:
+        file_content (str): The content of the JavaScript file.
+        import_line (str): The new import line to be added.
+        mode (str, optional): Determines where to insert the import line. Defaults to 'FULL_CONTENT'.
+            - "FULL_CONTENT": Adds the import line to the entire content.
+            - "JUST_IMPORTS": Adds the import line only within the import section.
+
+    Returns:
+        dict: A response containing the error state, message, and result data.
+"""
+    response = {
+        'error' : True,
+        'message' : '',
+        'data' : []
+    }
+    try:
+        import_line = import_line.replace("\n", "")
+        if (mode == 'FULL_CONTENT'):
+            if import_line not in file_content:
+                file_content = import_line + "\n" + file_content
+            response['data'] = file_content
+        elif (mode == 'IMPORT_MODE'):
+            import_section = re.search(r'import.*\n', file_content, re.DOTALL).group()
+            if import_line not in import_section:
+                import_section = import_section + import_line + "\n"
+                file_content = file_content.replace(re.search(r'import.*\n', file_content, re.DOTALL).group(), import_section)
+        response['error'] = False
+        response['data'] = file_content
+        response['message'] = f"The import line {import_line} has been added successfully."
+    except ValueError as ve:
+        response['message'] = str(ve)
+    return response
+    

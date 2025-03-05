@@ -1,5 +1,5 @@
 <template>
-    <div class="w-full mb-2">
+    <div class="w-full">
         <div>
             <button 
                 :class="[

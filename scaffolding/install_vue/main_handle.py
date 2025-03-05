@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import shutil
-from ..utils.settings_helper import copy_and_paste
+from pathlib import Path
+from ..utils.settings_helper import copy_and_paste, modify_js_object_attribute
 from ..manager_files_backups import ManagerSettingFile
 class ImplementVue:
     
@@ -327,9 +328,10 @@ class ImplementVue:
         process = ''
         destination_path = self.__root_destination_path + project_vue_name
         try:
-            
+
             message = "Vue 3 has been installed successfully"
             if not os.path.exists(destination_path):
+                print(" ".join(["npx","--y","create-vite@latest",destination_path,"--template","vue"]))
                 commands_install = ["npx","create-vite@latest",destination_path,"--template","vue"]
                 process = subprocess.run(commands_install,cwd=os.getcwd(),capture_output=True,check=True, text=True,shell=True)
                 print(process.stdout)
@@ -347,6 +349,7 @@ class ImplementVue:
                          
                 #install tailwindcss
                 tailwind_iantallation = self.install_tailwindcss()
+                
                 if tailwind_iantallation['error']:
                     raise ValueError("Tailwindcss have errors: " + tailwind_iantallation['message'])
                 
@@ -355,11 +358,11 @@ class ImplementVue:
                 content_vite_config = vite_config_file.read()
                 content_vite_config = content_vite_config.replace(
                     "import vue from '@vitejs/plugin-vue'",
-                    "import vue from '@vitejs/plugin-vue'\nimport path from 'path'"
+                    "import vue from '@vitejs/plugin-vue'\nimport path from 'path'\nimport tailwindcss from '@tailwindcss/vite'"
                 )
                 content_vite_config = content_vite_config.replace(
                     'plugins: [vue()],',
-                    'plugins: [vue()],\n   resolve:{\n       alias:{\n           "@": path.resolve(__dirname,"./src")\n        }\n   }'
+                    'plugins: [vue(), tailwindcss()],\n   resolve:{\n       alias:{\n           "@": path.resolve(__dirname,"./src")\n        }\n   }'
                 )
                 vite_config_file.close()
                 
@@ -405,38 +408,16 @@ class ImplementVue:
             import os
             
             destination_path = self.__root_destination_path + project_vue_name
-            tailwindcss_path = destination_path + '/tailwind.config.js'
             
             message = "tailwindcss has been installed successfully"
             if os.path.exists(destination_path):
                 project_path = os.path.join(os.getcwd(), destination_path)
-                commands_install = ["npm","install","-D","tailwindcss","postcss","autoprefixer"]
+                commands_install = ["npm","install","tailwindcss","@tailwindcss/vite"]
                 print("Tailwindcss is being installed")
                 process = subprocess.run(commands_install,cwd=project_path,capture_output=True,check=True, text=True,shell=True)
                 print(process.stdout)
 
-                commands_install = ["npx", "tailwindcss", "init", "-p"]
-                print('The tailwind.config.js and postcss.config.js are being generated')
-                process = subprocess.run(commands_install,cwd=project_path,capture_output=True, check=True ,text=True,shell=True)
-                print(process.stdout)
-                
-                tailwindcss_config = open(tailwindcss_path,mode='r+')
-                content_tailwindcss = tailwindcss_config.read() #"".join( )
-                tailwindcss_config.close()
-                content_tailwindcss = content_tailwindcss.replace(
-                    "content: [],",
-                    "content: [\n    \"./index.html\",\n    \"./src/**/*.{vue,js,ts,jsx,tsx}\"\n  ],"
-                )
                 sleep(5)
-                
-                tailwindcss_config = open(tailwindcss_path,mode='w+')
-                tailwindcss_config.write(content_tailwindcss)
-                tailwindcss_config.close()
-                
-                index_css_file = open(destination_path + './src/index.css',mode='w' )
-                index_css_file.write(
-                    "@tailwind base;\n@tailwind components;\n@tailwind utilities;"
-                )
                 
                 #installing icons
                 print("installing heroicons")
@@ -451,6 +432,10 @@ class ImplementVue:
             response['message'] = message
         except ValueError as ve:
             response['message'] = str(ve)
+        except FileNotFoundError as fnf:
+            response['message'] = str(fnf)
+        except Exception as ex:
+            response['message'] = str(ex)
         return response
     
     def setting_app_file(self,main_module_name):
