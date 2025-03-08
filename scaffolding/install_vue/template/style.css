@@ -1,3 +1,10 @@
+@import "tailwindcss";
+/*tailwindcss customize */
+@theme{
+  --breakpoint-xs: 30rem;
+}
+/*end customize tailwindcss*/
+
 :root{
     font-family: sans-serif;
     color: #777777;

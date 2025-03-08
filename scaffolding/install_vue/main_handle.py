@@ -228,9 +228,10 @@ class ImplementVue:
                     self.__replace_content(login_app, service_path + login_app +'Service.js')
                     
                     #rename the store file to login module name
-                    os.rename(store_path + 'useLoginUserStore.js',store_path + '/use' + login_app +'Store.js')
+                    login_app_capitalize = login_app.replace(login_app[0], login_app[0].upper())
+                    os.rename(store_path + 'useLoginUserStore.js',store_path + '/use' + login_app_capitalize +'Store.js')
                     #replace the content of store file with keywords to make the module works
-                    self.__replace_content(login_app, store_path + '/use' + login_app +'Store.js')
+                    self.__replace_content(login_app_capitalize, store_path + '/use' + login_app_capitalize +'Store.js')
                     
                     #rename the view file to login module name
                     os.rename(views_path + 'LoginUser.vue',views_path + login_app +'.vue')
@@ -500,7 +501,6 @@ import { createApp } from 'vue'
 import './style.css'
 import { createPinia } from 'pinia';
 import App from './App.vue'
-import './index.css'
 import router from './router'
 
 const pinia = createPinia();
